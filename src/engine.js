@@ -26,14 +26,14 @@ const Store = (() => {
 
 function defaultState() {
   return {
-    v: 1,
+    v: 2,
     onboarded: false,
     prefs: { portion:'standard', protein:'any', carb:'rice', heat:'mild', dessert:'any', theme:'system',
              autoRecommend:true, nutritionProminent:true, trackInventory:true, defaultMeal:'korean' },
     inv: {},
     invDates: {},
     shopping: [],
-    shopSources: { tonight:true, prep:true, bake:false },
+    shopSources: { tonight:true, prep:false, bake:false },
     favorites: [],
     lastMeal: null,
     tonight: null,
@@ -43,7 +43,7 @@ function defaultState() {
     prep: { days:4, custom:5, split:null, done:{}, comp:{ rice:2, chicken:1.5, beef:1.25, broccoli:4 }, compDone:{}, bake:{ sel:{}, done:{} }, packed:{} },
     containers: [],
     history: [],
-    ui: { prepTab:'dinners', invTab:'kitchen', invFilter:'all' },
+    ui: { prepTab:'dinners', invTab:'kitchen', invFilter:'all', rtabs:{} },
   };
 }
 
@@ -59,6 +59,7 @@ function loadState() {
   out.prep.bake = Object.assign({ sel:{}, done:{} }, isObj(out.prep.bake) ? out.prep.bake : {});
   ['done','compDone','packed'].forEach(k => { if (!isObj(out.prep[k])) out.prep[k] = {}; });
   out.ui = Object.assign(fresh.ui, isObj(s.ui) ? s.ui : {});
+  if (!isObj(out.ui.rtabs)) out.ui.rtabs = {};
   out.shopSources = Object.assign(fresh.shopSources, isObj(s.shopSources) ? s.shopSources : {});
   ['inv','invDates','opts','checks'].forEach(k => { if (!isObj(out[k])) out[k] = {}; });
   ['shopping','favorites','containers','history'].forEach(k => { if (!Array.isArray(out[k])) out[k] = []; });
@@ -74,6 +75,8 @@ function loadState() {
   out.favorites = out.favorites.filter(id => RECIPE[id]);
   if (out.tonight && (!isObj(out.tonight) || !RECIPE[out.tonight.id])) out.tonight = null;
   if (out.cook && (!isObj(out.cook) || !RECIPE[out.cook.rid] || !isObj(out.cook.timers) || typeof out.cook.i !== 'number')) out.cook = null;
+  // v2: meal prep is tucked away, so shopping no longer includes the prep plan by default
+  if (!(s.v >= 2)) { out.shopSources.prep = false; out.v = 2; }
   // keep history bounded
   if (out.history.length > 400) out.history = out.history.slice(-400);
   return out;
@@ -472,9 +475,10 @@ function bestReadiness(r) {
 }
 function readyLabel(rd) {
   if (!S.prefs.trackInventory) return { cls:'', text:'' };
-  if (rd.level === 'ready') return { cls:'ok', text:rd.low.length ? 'Ready · low on ' + rd.low.map(i => lcName(i)).join(', ') : 'Ready to make' };
-  if (rd.level === 'almost') return { cls:'warn', text:'Missing ' + rd.missing.map(i => lcName(i)).join(', ') };
-  return { cls:'bad', text:'Need ' + rd.missingCore.concat(rd.missing).slice(0, 3).map(i => lcName(i)).join(', ') };
+  const names = list => list.length <= 2 ? list.map(i => lcName(i)).join(' and ') : list.length + ' items';
+  if (rd.level === 'ready') return { cls:'ok', text: rd.low.length ? 'Ready · low on ' + names(rd.low) : 'Ready to make' };
+  if (rd.level === 'almost') return { cls:'warn', text:'Missing ' + names(rd.missing) };
+  return { cls:'bad', text:'Missing ' + names(rd.missingCore.concat(rd.missing)) };
 }
 const SHORT_NAMES = { beef:'Ground beef', chicken:'Chicken', rice:'Rice', ricepouch:'Rice pouches', potatoes:'Potatoes', oats:'Oat flour', broccoli:'Broccoli',
   corn:'Corn', blackbeans:'Black beans', lettuce:'Romaine', tomato:'Cherry tomatoes', spinach:'Spinach', peppers:'Peppers & onions', greenonion:'Green onion',
@@ -522,7 +526,7 @@ function recommendTonight() {
       if (isFav(r.id)) s += 3;
       if (S.prefs.protein !== 'any' && r.protein === S.prefs.protein) s += 2;
       if (S.prefs.defaultMeal === r.id) s += 1;
-      if (S.prefs.trackInventory) s += rd.level === 'ready' ? 4 : rd.level === 'almost' ? 2 : 0;
+      if (S.prefs.trackInventory) s += rd.level === 'ready' ? 4 : rd.level === 'almost' ? 2 - Math.min(rd.missing.length, 6) * 0.25 : 0;
       if (Date.now() - lastCooked(r.id) < 2 * DAY) s -= 3;
       s += ((doy + idx) % 4) * 0.1;
       if (s > bs) { bs = s; best = r.id; }

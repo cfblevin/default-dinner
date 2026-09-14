@@ -127,11 +127,8 @@ function renderCook() {
     const at = sch.items[i - 1] ? sch.items[i - 1].t : 0;
     body = `<p class="cook-step mono">Step ${i} of ${count} · ${fmtClock(at)}</p>
       <h1 id="cook-title" class="cook-title">${esc(s.title)}</h1>
-      <p class="cook-text">${esc(fill(s.text, c))}</p>
-      ${s.batch ? `<p class="callout">${esc(s.batch)}</p>` : ''}
+      <p class="cook-text">${esc([fill(s.text, c), s.safety, s.batch].filter(Boolean).join(' '))}</p>
       ${s.warn ? `<p class="callout warn"><strong>Heads up</strong> ${esc(s.warn)}</p>` : ''}
-      ${s.safety ? `<p class="callout safe"><strong>Food safety</strong> ${esc(s.safety)}</p>` : ''}
-      ${s.tip ? `<p class="callout tip"><strong>Tip</strong> ${esc(fill(s.tip, c))}</p>` : ''}
       ${timer}`;
     controls = `<button type="button" class="btn" data-a="cook-back">Back</button><button type="button" class="btn" data-a="cook-pause">Pause</button><button type="button" class="btn" data-a="cook-skip">Skip</button><button type="button" class="btn primary" data-a="cook-next">Done</button>`;
   } else {
@@ -291,7 +288,7 @@ function render() {
       case 'meals': html = viewMeals(); break;
       case 'meal': html = viewMeal(b); tab = 'meals'; break;
       case 'sweet': html = b ? viewDessert(b) : viewSweet(); break;
-      case 'prep': html = viewPrep(b); break;
+      case 'prep': html = viewPrep(b); tab = 'settings'; break;
       case 'inventory': html = viewInventory(b); break;
       case 'nocook': html = viewNoCook(); tab = 'tonight'; break;
       case 'week': html = viewWeek(); tab = 'tonight'; break;
@@ -453,6 +450,7 @@ const ACT = {
     });
   },
   inv(el) { cycleInv(el.dataset.id); render(); },
+  rtab(el) { S.ui.rtabs = Object.assign({}, S.ui.rtabs, { [el.dataset.rid]: el.dataset.v }); save(); render(); const t = document.getElementById('rtab-' + el.dataset.v); if (t) t.focus({ preventScroll:true }); },
   'inv-filter'(el) { S.ui.invFilter = el.dataset.v; save(); render(); },
   basics() { ITEMS.filter(i => i.staple).forEach(i => setInv(i.id, 'in')); save(); render(); toast('Marked oil, salt, pepper and spices as in stock'); },
   'build-list'() { S.shopSources.tonight = true; S.shopSources.prep = true; const n = addMissingToList(shoppingNeeds()); location.hash = '#/inventory/shopping'; toast(`Added ${n} items for tonight and your prep plan`); },
