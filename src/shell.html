@@ -1,0 +1,22 @@
+<title>Default Dinner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Schibsted+Grotesk:wght@500;600;700;800&display=swap">
+<!--STYLE-->
+<a class="skip" href="#view">Skip to content</a>
+<p id="storage-warn" class="storage-warn" hidden>Saving isn’t available in this browser. Changes last until you close the page.</p>
+<div class="app"><main id="view" tabindex="-1"></main></div>
+<nav class="tabbar" aria-label="Main">
+  <div class="tabbar-inner">
+    <a href="#/tonight" data-tab="tonight"><!--ICON:tonight--><span>Tonight</span></a>
+    <a href="#/meals" data-tab="meals"><!--ICON:meals--><span>Meals</span></a>
+    <a href="#/sweet" data-tab="sweet"><!--ICON:sweet--><span>Sweet</span></a>
+    <a href="#/prep" data-tab="prep"><!--ICON:prep--><span>Prep</span></a>
+    <a href="#/inventory" data-tab="inventory"><!--ICON:inventory--><span>Inventory</span></a>
+  </div>
+</nav>
+<div id="sheet" hidden></div>
+<div id="cook" hidden></div>
+<div id="onboarding" hidden></div>
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+<!--SCRIPT-->
