@@ -720,5 +720,10 @@ function viewSettings() {
     row('Appearance', seg('Appearance', [['system','System'],['light','Light'],['dark','Dark']], p.theme, 'pref', 'data-k="theme"')),
   ].join(''))}
   ${section('Reset', `<div class="btn-row"><button type="button" class="btn small" data-a="rerun-setup">Run setup again</button><button type="button" class="btn small" data-a="reset-inv">Reset inventory</button><button type="button" class="btn small danger" data-a="reset-app">Reset everything</button></div>`)}
-  <p class="fine">Everything stays on this device. No account, nothing sent anywhere.</p>`;
+  <p class="fine">Everything stays on this device. No account, nothing sent anywhere.${offlineLine()}</p>`;
+}
+function offlineLine() {
+  if (!window.__OFFLINE__) return '';
+  const ready = 'serviceWorker' in navigator && navigator.serviceWorker.controller;
+  return ready ? ' Saved for offline use: opens and saves without a connection.' : ' Getting ready for offline use — open the app once more while online.';
 }

@@ -611,4 +611,15 @@ window.addEventListener('hashchange', render);
 window.addEventListener('storage', e => { if (e.key === STORE_KEY) { S = loadState(); render(); } });
 setInterval(tick, 500);
 
+/* ---------- Offline support (hosted build only) ---------- */
+if (window.__OFFLINE__ && 'serviceWorker' in navigator && window.top === window) {
+  const hadController = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (hadController) toast('Update downloaded. Close and reopen the app to use it.');
+    else if (parseRoute().a === 'settings') render();
+  });
+  try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
+}
+
 render();
