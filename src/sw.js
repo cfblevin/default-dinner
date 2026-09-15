@@ -4,14 +4,33 @@
    time the phone is online and used from the following launch. */
 const VERSION = '__VERSION__';
 const CACHE = 'default-dinner-' + VERSION;
+const PAGE = './index.html';
 const ASSETS = __ASSETS__;
 
+async function precache() {
+  // The page itself must be this exact version. A CDN can briefly serve the
+  // previous index.html, so check the embedded version and bust the cache if needed.
+  let page = null;
+  for (const url of [PAGE + '?v=' + VERSION, PAGE + '?v=' + VERSION + '-' + Date.now()]) {
+    const res = await fetch(url, { cache: 'reload' });
+    if (!res.ok) continue;
+    const html = await res.text();
+    if (html.includes('content="' + VERSION + '"')) { page = html; break; }
+  }
+  if (!page) throw new Error('New version not available yet'); // keep the old copy; try again next launch
+  const cache = await caches.open(CACHE);
+  const headers = { 'Content-Type': 'text/html; charset=utf-8' };
+  await cache.put(PAGE, new Response(page, { headers }));
+  await cache.put('./', new Response(page, { headers }));
+  // Everything else is best effort: a missing icon or font must not block the update.
+  await Promise.allSettled(ASSETS.filter(a => a !== './' && a !== PAGE).map(async url => {
+    const res = await fetch(url, { cache: 'reload' });
+    if (res.ok) await cache.put(url, res);
+  }));
+}
+
 self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE)
-      .then(cache => cache.addAll(ASSETS.map(url => new Request(url, { cache: 'reload' }))))
-      .then(() => self.skipWaiting())
-  );
+  event.waitUntil(precache().then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', event => {
@@ -28,11 +47,11 @@ self.addEventListener('fetch', event => {
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
 
-  // Opening the app: always answer from the saved copy so it starts without a connection.
+  // Opening the app: answer from the saved copy so it starts without a connection.
   if (req.mode === 'navigate') {
     event.respondWith(
       caches.open(CACHE).then(cache =>
-        cache.match('./index.html').then(hit => hit || fetch(req).catch(() => cache.match('./')))
+        cache.match(PAGE).then(hit => hit || fetch(req).catch(() => cache.match('./')))
       )
     );
     return;

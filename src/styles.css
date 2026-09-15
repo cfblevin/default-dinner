@@ -531,3 +531,21 @@ body.cooking .toast { bottom:calc(110px + var(--safe-b)); }
 .amount-input { width:110px; min-height:44px; border:1px solid var(--line-strong); border-radius:10px; padding:0 12px; background:var(--surface); color:var(--ink); font-size:18px; }
 .amount-row .seg { flex:1; }
 .amount-box .fine { margin-top:0; }
+
+/* ---------- Notes, week plan, backup, kitchen update ---------- */
+.callout.note { background:var(--accent-soft); margin:10px 0 4px; }
+.callout.note strong { color:var(--accent); }
+.note-text { white-space:pre-wrap; }
+.note-input { width:100%; min-height:88px; border:1px solid var(--line-strong); border-radius:10px; padding:10px 12px; background:var(--surface); color:var(--ink); font:16px/1.45 var(--font-body); resize:vertical; }
+.week-plan { border:1px solid var(--line); border-radius:12px; background:var(--surface); padding:0 12px; margin:12px 0 4px; }
+.week-plan > summary { display:flex; align-items:center; justify-content:space-between; gap:10px; min-height:52px; cursor:pointer; list-style:none; }
+.week-plan > summary::-webkit-details-marker { display:none; }
+.week-title { font-weight:700; }
+.week-count { font-size:14px; color:var(--accent); font-weight:600; }
+.week-plan .split { border-top:1px solid var(--line); }
+.week-plan .fine { margin-bottom:10px; }
+.text-btn.inline { min-height:0; padding:0 2px; font-size:13px; }
+.backup .btn-row { margin-top:10px; }
+.backup label.btn { cursor:pointer; }
+.cook-inv { margin-top:4px; }
+.seg button:focus-visible, .chip:focus-visible, .rtabs button:focus-visible { outline-offset:-2px; }

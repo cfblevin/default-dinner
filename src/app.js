@@ -21,8 +21,8 @@ function toast(msg) {
 }
 
 /* ---------- Confirm sheet (window.confirm can be blocked in sandboxes) ---------- */
-function askConfirm(title, text, yesLabel, onYes) {
-  SHEET = { confirm:true, title, text, yesLabel, onYes };
+function askConfirm(title, text, yesLabel, onYes, altLabel, onAlt) {
+  SHEET = { confirm:true, title, text, yesLabel, onYes, altLabel, onAlt };
   renderSheet();
 }
 
@@ -76,22 +76,38 @@ function cookContext() {
   const sch = schedule(steps);
   return { r, c, steps, sch, count: steps.length };
 }
+function cookSig(r, o) {
+  const keys = r.type === 'dinner'
+    ? ['mode','servings','amountOz','plates','cut','carb','rice','sauce','tier','portion','heat']
+    : ['mode','yield','haveCount','variation','glaze','tier'];
+  return JSON.stringify(keys.map(k => (o && o[k] != null) ? o[k] : null));
+}
 function startCook(rid) {
   const r = RECIPE[rid];
   if (!r) return;
   ensureAudio();
-  const opts = getOpts(r);
-  if (!S.cook || S.cook.rid !== rid || JSON.stringify(S.cook.opts) !== JSON.stringify(opts) || S.cook.portion !== S.prefs.portion) {
-    S.cook = { rid, opts, portion: S.prefs.portion, i:0, timers:{}, paused:false, started: Date.now() };
-  }
-  if (r.type === 'dinner') setTonight(rid);
-  save();
-  location.hash = '#/cook';
+  // Freeze portion and heat with the cook so Settings changes can't alter it midway.
+  const opts = Object.assign(getOpts(r), r.type === 'dinner' ? { portion: S.prefs.portion, heat: S.prefs.heat } : {});
+  const go = () => { if (r.type === 'dinner') setTonight(rid); save(); location.hash = '#/cook'; };
+  const begin = () => { S.cook = { rid, opts, i:0, timers:{}, paused:false, started: Date.now() }; go(); };
+  if (!S.cook) return begin();
+  const sameCook = S.cook.rid === rid && cookSig(r, Object.assign({ portion: S.prefs.portion, heat: S.prefs.heat }, S.cook.opts)) === cookSig(r, opts);
+  if (sameCook) return go();
+  const started = (S.cook.i || 0) > 0 || Object.keys(S.cook.timers || {}).length > 0;
+  if (!started) return begin();
+  const cur = RECIPE[S.cook.rid];
+  askConfirm('Start over?',
+    `You’re on step ${S.cook.i} of ${cur.name}. Starting ${S.cook.rid === rid ? 'again with these options' : r.name} clears that progress and its timers.`,
+    'Start over', begin, 'Resume ' + cur.short, () => { location.hash = '#/cook'; });
 }
 function timerLeft(t) { return t.running ? Math.max(0, (t.end - Date.now()) / 1000) : (t.left != null ? t.left : t.total); }
 
 function renderCook() {
   const root = $('#cook');
+  const prevBody = $('#cook-body');
+  const prevScroll = prevBody ? prevBody.scrollTop : 0;
+  const prevStep = root.dataset.step;
+  const prevFocus = root.contains(document.activeElement) ? focusKey(document.activeElement) : null;
   if (!S.cook || !RECIPE[S.cook.rid]) { root.hidden = true; root.innerHTML = ''; keepAwake(false); return; }
   const { r, c, steps, sch, count } = cookContext();
   const ck = S.cook;
@@ -112,6 +128,7 @@ function renderCook() {
     body = `<p class="cook-step mono">${isBake ? 'Before you start' : 'Mise en place'} · about ${fmtDur(sch.total)}</p>
       <h1 id="cook-title" class="cook-title">${isBake ? 'Before you start' : 'Get everything out'}</h1>
       <p class="cook-sub">${summary}</p>
+      ${noteCallout(r.id)}
       ${top}
       <h2 class="h3">Ingredients</h2>${ingredientList(c, r.id, 'cook-')}`;
     controls = `<button type="button" class="btn" data-a="cook-exit">Not now</button><button type="button" class="btn primary span3" data-a="cook-next">Start step 1</button>`;
@@ -120,9 +137,10 @@ function renderCook() {
     const t = ck.timers[i];
     let timer = '';
     if (s.timer) {
-      if (!t) timer = `<button type="button" class="btn timer-start" data-a="timer-start" data-i="${i}"><span class="mono">${fmtSec(s.timer * 60)}</span> Start timer</button>${s.timerNote ? `<p class="fine center">${esc(s.timerNote)}</p>` : ''}`;
+      const lockNote = `<p class="fine center">Keep this screen open: iPhone can’t sound a timer while it’s locked or you’re in another app.</p>`;
+      if (!t) timer = `<button type="button" class="btn timer-start" data-a="timer-start" data-i="${i}"><span class="mono">${fmtSec(s.timer * 60)}</span> Start timer</button>${s.timerNote ? `<p class="fine center">${esc(s.timerNote)}</p>` : ''}${ck.lockNoteSeen ? '' : lockNote}`;
       else if (t.done) timer = `<div class="timer done" role="status"><span class="timer-big mono">0:00</span><span class="timer-label">Timer done</span><div class="pair"><button type="button" class="btn" data-a="timer-reset" data-i="${i}">Restart</button></div></div>`;
-      else timer = `<div class="timer ${t.running ? 'running' : 'paused'}"><span class="timer-big mono" data-timer="${i}">${fmtSec(timerLeft(t))}</span><span class="timer-label">${t.running ? 'Running — you can move on' : 'Timer paused'}</span><div class="pair">${t.running ? `<button type="button" class="btn" data-a="timer-pause" data-i="${i}">Pause timer</button>` : `<button type="button" class="btn" data-a="timer-start" data-i="${i}">Resume timer</button>`}<button type="button" class="btn" data-a="timer-reset" data-i="${i}">Reset</button></div></div>`;
+      else timer = `<div class="timer ${t.running ? 'running' : 'paused'}"><span class="timer-big mono" data-timer="${i}">${fmtSec(timerLeft(t))}</span><span class="timer-label">${t.running ? 'Running · keep this screen open' : 'Timer paused'}</span><div class="pair">${t.running ? `<button type="button" class="btn" data-a="timer-pause" data-i="${i}">Pause timer</button>` : `<button type="button" class="btn" data-a="timer-start" data-i="${i}">Resume timer</button>`}<button type="button" class="btn" data-a="timer-reset" data-i="${i}">Reset</button></div></div>`;
     }
     const at = sch.items[i - 1] ? sch.items[i - 1].t : 0;
     body = `<p class="cook-step mono">Step ${i} of ${count} · ${fmtClock(at)}</p>
@@ -141,7 +159,9 @@ function renderCook() {
         ? `<h2 class="h3">If you’re not finishing it</h2>${bullets(r.leftovers.separate)}<h2 class="h3">Storage</h2>${bullets(r.leftovers.storage.slice(0, 2))}`
         : `<dl class="kv"><div><dt>Fridge</dt><dd>${esc(r.storage.fridge)}</dd></div><div><dt>Freezer</dt><dd>${esc(r.storage.freezer)}</dd></div><div><dt>Reheat</dt><dd>${esc(r.storage.reheat)}</dd></div></dl>`}
       ${extra ? (() => { const left = c.n - 1, fridge = Math.min(left, FRIDGE_SLOTS - 1), freezer = left - fridge; const word = c.mode === 'amount' ? 'plate' : 'serving'; return `<div class="check-line"><input type="checkbox" id="cook-pack" checked><label for="cook-pack">${left === 1 ? `Save the other ${word} as a fridge container` : `Save the other ${left} ${word}s as containers: ${fridge} in the fridge${freezer ? `, ${freezer} in the freezer` : ''}`}</label></div>`; })() : ''}
-      <p class="fine">~${roundKcal(nu.kcal)} kcal · ${roundG(nu.protein)} g protein per ${isBake ? c.y.unit : 'serving'}, approximate.</p>`;
+      ${kitchenUpdate(c)}
+      ${noteCallout(r.id)}
+      <p class="fine">~${roundKcal(nu.kcal)} kcal · ${roundG(nu.protein)} g protein per ${isBake ? c.y.unit : c.mode === 'amount' ? 'plate' : 'serving'}, approximate.</p>`;
     controls = `<button type="button" class="btn" data-a="cook-back">Back</button><button type="button" class="btn primary span3" data-a="cook-finish">Log it and finish</button>`;
   }
 
@@ -166,8 +186,29 @@ function renderCook() {
     ${ck.paused ? `<div class="paused" role="alertdialog" aria-labelledby="paused-title"><p id="paused-title" class="cook-title">Paused</p><p class="muted">Timers are stopped. Everything is where you left it.</p><button type="button" class="btn primary xl" data-a="cook-resume">Resume</button></div>` : ''}
   </div>`;
   root.hidden = false;
+  root.dataset.step = String(i);
+  const bodyEl = $('#cook-body');
+  if (bodyEl && prevStep === String(i)) bodyEl.scrollTop = prevScroll;
+  if (prevFocus && prevStep === String(i)) { const el = root.querySelector(prevFocus); if (el) el.focus({ preventScroll:true }); }
   document.body.classList.add('cooking');
   keepAwake(true);
+}
+// After cooking: quick taps to mark what got used up.
+function kitchenUpdate(c) {
+  if (!S.prefs.trackInventory) return '';
+  const seen = new Set();
+  const ids = [];
+  c.ings.forEach(i => {
+    if (i.opt || (i.extra === 'Heat' && c.heat === 'mild')) return;
+    const a = avail(i);
+    const id = a.st !== 'out' ? a.via : altIds(i)[0];
+    if (seen.has(id) || !ITEM[id] || ITEM[id].staple) return;
+    seen.add(id); ids.push(id);
+  });
+  if (!ids.length) return '';
+  return `<h2 class="h3">Update your kitchen</h2><p class="fine">Tap anything you used up or are running low on.</p>
+    <ul class="inv cook-inv">${ids.map(id => { const st = inv(id); const word = st === 'in' ? 'In stock' : st === 'low' ? 'Low' : 'Out';
+      return `<li><button type="button" class="inv-row" data-a="cook-inv" data-id="${id}" aria-label="${esc(itemName(id))}: ${word}. Tap to change."><span class="inv-body"><span class="inv-name">${esc(itemName(id))}</span></span><span class="pill ${st}"><i aria-hidden="true">${st === 'in' ? '●' : st === 'low' ? '◐' : '○'}</i>${word}</span></button></li>`; }).join('')}</ul>`;
 }
 
 function cookMove(delta) {
@@ -251,7 +292,11 @@ function renderSheet() {
   if (!sheetReturnFocus) sheetReturnFocus = document.activeElement;
   let inner;
   if (SHEET === 'switch') inner = sheetSwitch();
-  else if (SHEET.confirm) inner = `<div class="sheet-inner"><h2 class="h2" id="sheet-title">${esc(SHEET.title)}</h2><p class="muted">${esc(SHEET.text)}</p><div class="pair"><button type="button" class="btn" data-a="close-sheet">Cancel</button><button type="button" class="btn danger-fill" data-a="confirm-yes">${esc(SHEET.yesLabel)}</button></div></div>`;
+  else if (SHEET.confirm) inner = `<div class="sheet-inner"><h2 class="h2" id="sheet-title">${esc(SHEET.title)}</h2><p class="muted">${esc(SHEET.text)}</p>${SHEET.altLabel
+      ? `<div class="pair"><button type="button" class="btn primary" data-a="confirm-alt">${esc(SHEET.altLabel)}</button><button type="button" class="btn danger" data-a="confirm-yes">${esc(SHEET.yesLabel)}</button></div><button type="button" class="text-btn" data-a="close-sheet">Cancel</button>`
+      : `<div class="pair"><button type="button" class="btn" data-a="close-sheet">Cancel</button><button type="button" class="btn danger-fill" data-a="confirm-yes">${esc(SHEET.yesLabel)}</button></div>`}</div>`;
+  else if (SHEET.paste) inner = `<div class="sheet-inner"><div class="sheet-head"><h2 class="h2" id="sheet-title">Paste backup text</h2><button type="button" class="icon-btn" data-a="close-sheet" aria-label="Close">${ICON.close}</button></div><label for="paste-box" class="muted">Paste the whole backup text, then Restore.</label><textarea id="paste-box" class="note-input" rows="6" autocomplete="off"></textarea><button type="button" class="btn primary wide" data-a="restore-from-paste">Restore</button></div>`;
+  else if (SHEET.backupText) inner = `<div class="sheet-inner"><div class="sheet-head"><h2 class="h2" id="sheet-title">Copy your backup</h2><button type="button" class="icon-btn" data-a="close-sheet" aria-label="Close">${ICON.close}</button></div><p class="muted">Saving a file isn’t available here. Copy this text and keep it somewhere safe, like Notes.</p><textarea id="backup-box" class="note-input mono" rows="6" readonly>${esc(SHEET.backupText)}</textarea><button type="button" class="btn primary wide" data-a="backup-copy">Copy text</button></div>`;
   root.innerHTML = `<div class="backdrop" data-a="close-sheet"></div><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">${inner}</div>`;
   root.hidden = false;
   const first = root.querySelector('.sheet button');
@@ -288,7 +333,7 @@ function render() {
       case 'meals': html = viewMeals(); break;
       case 'meal': html = viewMeal(b); tab = 'meals'; break;
       case 'sweet': html = b ? viewDessert(b) : viewSweet(); break;
-      case 'prep': html = viewPrep(b); tab = 'settings'; break;
+      case 'prep': html = viewPrep(b); tab = 'tonight'; break;
       case 'inventory': html = viewInventory(b); break;
       case 'nocook': html = viewNoCook(); tab = 'tonight'; break;
       case 'week': html = viewWeek(); tab = 'tonight'; break;
@@ -312,7 +357,10 @@ function render() {
     $('#view').innerHTML = html;
     document.querySelectorAll('.tabbar a').forEach(el => { if (el.dataset.tab === tab) el.setAttribute('aria-current', 'page'); else el.removeAttribute('aria-current'); });
     // restore remembered <details> state
-    document.querySelectorAll('#view details[data-d]').forEach(d => { if (d.dataset.d in OPEN) d.open = OPEN[d.dataset.d]; });
+    document.querySelectorAll('#view details[data-d]').forEach(d => {
+      if (d.dataset.d.startsWith('inv-') && S.ui.invFilter !== 'all') return;
+      if (d.dataset.d in OPEN) d.open = OPEN[d.dataset.d];
+    });
     if (sameRoute) window.scrollTo(0, y);
     else { window.scrollTo(0, 0); const h1 = $('#view h1'); if (h1 && lastRoute) { h1.setAttribute('tabindex', '-1'); h1.focus({ preventScroll:true }); } }
     if (sameRoute && fk) { const el = document.querySelector(fk); if (el) el.focus({ preventScroll:true }); }
@@ -355,9 +403,54 @@ const ACT = {
       setOpt(rid, 'amountOz', null); setOpt(rid, 'plates', null);
     }
     if (k === 'plates') v = clamp(parseInt(v, 10) || 1, 1, 6);
+    if (k === 'yield') {
+      if (v === 'have') { setOpt(rid, 'mode', 'amount'); render(); return; }
+      setOpt(rid, 'mode', 'servings');
+    }
     setOpt(rid, k, v);
     render();
   },
+  'confirm-alt'() { const fn = SHEET && SHEET.onAlt; SHEET = null; renderSheet(); if (fn) fn(); },
+  'week-step'(el) { setWeekCount(el.dataset.id, (weekCounts()[el.dataset.id] || 0) + (+el.dataset.d)); render(); },
+  'week-clear'() { S.weekPlan = { start: weekStart(), counts:{} }; save(); render(); },
+  'have-step'(el) {
+    const r = RECIPE[el.dataset.rid];
+    const cur = getOpts(r).haveCount;
+    const next = clamp(cur + (+el.dataset.d), r.have.min, r.have.max);
+    if (next === cur) { toast(next === r.have.min ? 'That’s the smallest batch' : 'That’s the biggest batch this recipe handles'); return; }
+    setOpt(r.id, 'haveCount', next); render();
+  },
+  'cook-inv'(el) { cycleInv(el.dataset.id); renderCook(); },
+  async 'backup-save'() {
+    const stamp = new Date();
+    const name = 'default-dinner-backup-' + stamp.getFullYear() + '-' + String(stamp.getMonth() + 1).padStart(2, '0') + '-' + String(stamp.getDate()).padStart(2, '0') + '.json';
+    const data = JSON.stringify({ app:'default-dinner', exported: Date.now(), state: S });
+    const done = msg => { S.lastBackup = Date.now(); save(); render(); if (msg) toast(msg); };
+    try {
+      const file = new File([data], name, { type:'application/json' });
+      if (navigator.canShare && navigator.canShare({ files:[file] })) {
+        await navigator.share({ files:[file], title:'Default Dinner backup' });
+        return done('Backup saved');
+      }
+    } catch (e) { if (e && e.name === 'AbortError') return; }
+    try {
+      if (window.top !== window) throw new Error('embedded');
+      const url = URL.createObjectURL(new Blob([data], { type:'application/json' }));
+      const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+      return done('Backup downloaded: ' + name);
+    } catch (e) {
+      SHEET = { backupText: data }; renderSheet();
+      S.lastBackup = Date.now(); save();
+    }
+  },
+  async 'backup-copy'() {
+    const box = $('#backup-box');
+    try { await navigator.clipboard.writeText(box.value); toast('Copied. Paste it somewhere safe.'); }
+    catch (e) { box.focus(); box.select(); toast('Select all and copy'); }
+  },
+  'restore-paste'() { SHEET = { paste:true }; renderSheet(); const t = $('#paste-box'); if (t) t.focus(); },
+  'restore-from-paste'() { const t = $('#paste-box'); restoreBackupText(t ? t.value : ''); },
   'amount-preset'(el) { setOpt(el.dataset.rid, 'amountOz', +el.dataset.v); setOpt(el.dataset.rid, 'plates', null); render(); },
   pref(el) {
     const k = el.dataset.k, v = el.dataset.v;
@@ -504,6 +597,7 @@ const ACT = {
   },
   'timer-start'(el) {
     ensureAudio();
+    S.cook.lockNoteSeen = true;
     const i = +el.dataset.i;
     const { steps } = cookContext();
     const s = steps[i - 1];
@@ -546,16 +640,41 @@ const ACT = {
   'ob-finish'() { finishOnboarding(true); },
 };
 
+function restoreBackupText(text) {
+  let parsed = null;
+  try { parsed = JSON.parse(String(text || '').trim()); } catch (e) {}
+  if (!parsed || parsed.app !== 'default-dinner' || !isObj(parsed.state)) { toast('That isn’t a Default Dinner backup'); return; }
+  const when = parsed.exported ? new Date(parsed.exported).toLocaleDateString(undefined, { month:'short', day:'numeric', year:'numeric' }) : 'an unknown date';
+  askConfirm('Restore this backup?', 'From ' + when + '. It replaces everything currently saved on this device.', 'Restore', () => {
+    Store.save(parsed.state);
+    S = loadState();
+    S.onboarded = true;
+    save();
+    OB = null;
+    location.hash = '#/tonight';
+    render();
+    toast('Backup restored');
+  });
+}
 const CHANGE = {
+  'restore-file'(el) {
+    const file = el.files && el.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { toast('That file is too big to be a backup'); el.value = ''; return; }
+    const reader = new FileReader();
+    reader.onload = () => { el.value = ''; restoreBackupText(reader.result); };
+    reader.onerror = () => toast('Couldn’t read that file');
+    reader.readAsText(file);
+  },
   'amount-num'(el) {
     const rid = el.dataset.rid;
     const o = getOpts(RECIPE[rid]);
     const val = parseFloat(String(el.value).replace(',', '.'));
     const oz = o.amountUnit === 'lb' ? val * 16 : val;
-    if (!(oz >= 2 && oz <= 96)) { toast('Enter an amount between 2 oz and 6 lb'); render(); return; }
+    if (!(oz >= 2 && oz <= 96)) { toast('Enter an amount between 2 oz and 6 lb'); deferRender(); return; }
     setOpt(rid, 'amountOz', Math.round(oz * 10) / 10);
     setOpt(rid, 'plates', null);
-    render();
+    deferRender();
   },
   check(el) { const { rid, key } = el.dataset; S.checks[rid] = Object.assign({}, S.checks[rid], { [key]: el.checked }); save(); },
   'prep-done'(el) { S.prep.done[el.dataset.id] = el.checked; save(); render(); },
@@ -567,13 +686,28 @@ const CHANGE = {
   'shop-check'(el) { const x = S.shopping.find(s => s.id === el.dataset.id); if (x) x.checked = el.checked; save(); render(); },
 };
 
+// A change event fires when the amount box loses focus, which happens on the way
+// to tapping a button. Rebuilding the page right then would swallow that tap, so
+// wait briefly; any tap in the meantime renders on its own.
+let pendingRender = 0;
+function deferRender() { clearTimeout(pendingRender); pendingRender = setTimeout(() => { pendingRender = 0; render(); }, 400); }
+function flushRender() { if (!pendingRender) return false; clearTimeout(pendingRender); pendingRender = 0; return true; }
+document.addEventListener('input', e => {
+  const el = e.target;
+  if (el.dataset && el.dataset.a === 'note') {
+    const t = el.value.slice(0, 1000);
+    if (t.trim()) S.notes[el.dataset.rid] = t; else delete S.notes[el.dataset.rid];
+    save();
+  }
+});
 document.addEventListener('click', e => {
+  const hadPending = flushRender();
   const skip = e.target.closest('.skip');
   if (skip) { e.preventDefault(); const v = $('#view'); v.focus(); v.scrollIntoView(); return; }
   const el = e.target.closest('[data-a]');
-  if (!el || el.tagName === 'INPUT' || el.tagName === 'FORM') return;
+  if (!el || el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'FORM') { if (!el && hadPending) render(); return; }
   const fn = ACT[el.dataset.a];
-  if (!fn) return;
+  if (!fn) { if (hadPending) render(); return; }
   e.preventDefault();
   fn(el, e);
 });
@@ -598,9 +732,23 @@ document.addEventListener('submit', e => {
 });
 document.addEventListener('toggle', e => {
   const d = e.target;
-  if (d.tagName === 'DETAILS' && d.dataset.d) OPEN[d.dataset.d] = d.open;
+  if (d.tagName === 'DETAILS' && d.dataset.d && !(d.dataset.d.startsWith('inv-') && S.ui.invFilter !== 'all')) OPEN[d.dataset.d] = d.open;
 }, true);
 document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.target.classList && e.target.classList.contains('amount-input')) { e.preventDefault(); e.target.blur(); flushRender(); render(); return; }
+  // Arrow keys move between options in a group (radio buttons and recipe tabs).
+  if (['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key) && e.target.matches && e.target.matches('[role="radio"],[role="tab"]')) {
+    const group = e.target.closest('[role="radiogroup"],[role="tablist"]');
+    if (group) {
+      const items = [...group.querySelectorAll('[role="radio"],[role="tab"]')];
+      const idx = items.indexOf(e.target);
+      const next = items[(idx + (e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? -1 : 1) + items.length) % items.length];
+      e.preventDefault();
+      next.focus();
+      next.click();
+      return;
+    }
+  }
   if (e.key === 'Escape') {
     if (SHEET) { SHEET = null; renderSheet(); return; }
     if (!$('#cook').hidden && S.cook && S.cook.paused) { ACT['cook-resume'](); return; }

@@ -52,8 +52,24 @@ function artFor(r, size, carb) { return r.type === 'dinner' ? bowlSVG(r, size, c
 
 /* ---------- Components ---------- */
 function seg(label, options, value, act, extra = '') {
-  return `<div class="seg" role="radiogroup" aria-label="${esc(label)}">${options.map(([v, t]) =>
-    `<button type="button" role="radio" aria-checked="${String(v) === String(value)}" data-a="${act}" data-v="${esc(v)}" ${extra}>${t}</button>`).join('')}</div>`;
+  const any = options.some(([v]) => String(v) === String(value));
+  return `<div class="seg" role="radiogroup" aria-label="${esc(label)}">${options.map(([v, t], i) => {
+    const on = String(v) === String(value);
+    return `<button type="button" role="radio" aria-checked="${on}" tabindex="${on || (!any && i === 0) ? 0 : -1}" data-a="${act}" data-v="${esc(v)}" ${extra}>${t}</button>`;
+  }).join('')}</div>`;
+}
+function chipGroup(label, options, value, rid, k) {
+  return `<div class="chips" role="radiogroup" aria-label="${esc(label)}">${options.map(([v, t]) =>
+    `<button type="button" role="radio" class="chip" aria-checked="${v === value}" tabindex="${v === value ? 0 : -1}" data-a="opt" data-rid="${rid}" data-k="${k}" data-v="${esc(v)}">${esc(t)}</button>`).join('')}</div>`;
+}
+function noteCallout(rid) {
+  const n = (S.notes[rid] || '').trim();
+  return n ? `<div class="callout note"><strong>Your note</strong> <span class="note-text">${esc(n)}</span></div>` : '';
+}
+function noteEditor(rid) {
+  return `<h3 class="h3 first"><label for="note-${rid}">Your notes</label></h3>
+    <textarea id="note-${rid}" class="note-input" rows="3" maxlength="1000" placeholder="Tweaks you like, e.g. extra garlic, 1½ tbsp soy is plenty" data-a="note" data-rid="${rid}">${esc(S.notes[rid] || '')}</textarea>
+    <p class="fine">Saved as you type. Shows on the Ingredients tab and in cooking mode.</p>`;
 }
 function stockBadge(st, via, primary) {
   if (!S.prefs.trackInventory) return '';
@@ -141,7 +157,7 @@ function viewTonight() {
   let banners = '';
   if (S.cook && RECIPE[S.cook.rid]) {
     const cr = RECIPE[S.cook.rid];
-    banners += `<button type="button" class="banner" data-a="resume"><span><strong>Resume ${esc(cr.short)}</strong><span class="muted"> · step ${S.cook.i || 1}</span></span>${ICON.chev}</button>`;
+    banners += `<button type="button" class="banner" data-a="resume"><span><strong>Resume ${esc(cr.short)}</strong><span class="muted"> · ${S.cook.i ? 'step ' + S.cook.i : 'not started yet'}</span></span>${ICON.chev}</button>`;
   }
   if (good.length) {
     const names = [...new Set(good.map(ct => RECIPE[ct.rid].short))].join(', ');
@@ -197,7 +213,7 @@ function viewTonight() {
     </div>
     <p class="portion mono">${esc(main.join(' · '))}</p>
     ${dinnerStats(nu, tm)}
-    <p class="fine">Approximate nutrition, per serving.</p>
+    <p class="fine">Approximate nutrition, per ${c.mode === 'amount' ? 'plate' : 'serving'}.</p>
     <div class="hero-actions">
       <button type="button" class="btn primary xl" data-a="start-cook" data-id="${r.id}">Start cooking</button>
       <div class="pair">
@@ -249,7 +265,7 @@ function recipeTab(rid, tabs) {
 }
 function recipeTabs(rid, tabs, current) {
   return `<div class="rtabs" role="tablist" aria-label="Recipe sections">${tabs.map(([k, l]) =>
-    `<button type="button" role="tab" id="rtab-${k}" aria-selected="${k === current}" aria-controls="rpanel" data-a="rtab" data-rid="${rid}" data-v="${k}">${l}</button>`).join('')}</div>`;
+    `<button type="button" role="tab" id="rtab-${k}" aria-selected="${k === current}" tabindex="${k === current ? 0 : -1}" aria-controls="rpanel" data-a="rtab" data-rid="${rid}" data-v="${k}">${l}</button>`).join('')}</div>`;
 }
 function tierBlock(r, o, id) {
   return `<h3 class="h3 first">Flavor level</h3>${seg('Flavor level', [['base','Base'],['better','Better'],['loaded','Loaded']], o.tier, 'opt', `data-rid="${id}" data-k="tier"`)}
@@ -290,11 +306,11 @@ function viewMeal(id) {
   const dispAmt = o.amountUnit === 'lb' ? String(Math.round(o.amountOz / 16 * 100) / 100) : String(Math.round(o.amountOz * 10) / 10);
   const amountBox = o.mode !== 'amount' ? '' : `<div class="amount-box">
       <label class="opt-label" for="amount-${id}">How much ${protName} do you have?</label>
-      <div class="amount-row"><input id="amount-${id}" class="amount-input mono" type="number" inputmode="decimal" min="0" step="any" value="${dispAmt}" data-a="amount-num" data-rid="${id}">
+      <div class="amount-row"><input id="amount-${id}" class="amount-input mono" type="text" inputmode="decimal" autocomplete="off" value="${dispAmt}" data-a="amount-num" data-rid="${id}">
         ${seg('Unit', [['lb','lb'],['oz','oz']], o.amountUnit, 'opt', `data-rid="${id}" data-k="amountUnit"`)}</div>
       <div class="chips">${[[8,'½ lb'],[16,'1 lb'],[24,'1½ lb'],[32,'2 lb']].map(([oz, l]) => `<button type="button" class="chip" aria-pressed="${Math.abs(o.amountOz - oz) < 0.01}" data-a="amount-preset" data-rid="${id}" data-v="${oz}">${l}</button>`).join('')}</div>
       <span class="opt-label">Split into</span>
-      ${seg('Plates', [[1,'1 plate'],[2,'2'],[3,'3'],[4,'4']], c.plates, 'opt', `data-rid="${id}" data-k="plates"`)}
+      ${seg('Plates', [[1,'1'],[2,'2'],[3,'3'],[4,'4'],[5,'5'],[6,'6']], c.plates, 'opt', `data-rid="${id}" data-k="plates"`)}
       <p class="fine">About ${fmtNum(c.scaleN, [0, 0.25, 0.5, 0.75, 1])} standard ${c.scaleN > 1.12 ? 'servings' : 'serving'} of everything. Every ingredient below is scaled to your ${fmtQ(o.amountOz, 'oz')}.</p>
     </div>`;
   const visibleOpts = [
@@ -310,7 +326,7 @@ function viewMeal(id) {
 
   let panel;
   if (tab === 'ingredients') {
-    panel = ingredientList(c, id) + missingButtons(id);
+    panel = noteCallout(id) + ingredientList(c, id) + missingButtons(id);
   } else if (tab === 'steps') {
     panel = `<p class="summary">Prep ${tm.prep} min · Cook ${tm.cook} min · <strong>${tm.total} min total</strong></p>
       <details class="more" data-d="equipment"><summary>Equipment</summary>${bullets(r.equipment)}</details>
@@ -318,7 +334,7 @@ function viewMeal(id) {
       <h3 class="h3">Timeline</h3>${timelineList(tm.sch)}
       <h3 class="h3">Finish</h3><p class="body-text">${esc(r.finish)}</p>`;
   } else if (tab === 'extras') {
-    panel = tierBlock(r, o, id) + `<h3 class="h3">Swaps</h3>${bullets(r.subs)}` + nutritionDetails(nu);
+    panel = noteEditor(id) + tierBlock(r, o, id).replace('h3 first', 'h3') + `<h3 class="h3">Swaps</h3>${bullets(r.subs)}` + nutritionDetails(nu);
   } else {
     const lo = r.leftovers;
     panel = `<h3 class="h3 first">If you’re not finishing it</h3>${bullets(lo.separate)}
@@ -368,14 +384,18 @@ function viewDessert(id) {
   const tab = recipeTab(id, TABS);
 
   const optRows = [
-    `<div class="opt"><span class="opt-label">Make</span>${seg('Batch size', r.yields.map(y => [y.id, y.label]), o.yield, 'opt', `data-rid="${id}" data-k="yield"`)}</div>`,
-    r.variations ? `<div class="opt"><span class="opt-label">Version</span><div class="chips" role="radiogroup" aria-label="Version">${r.variations.map(v => `<button type="button" role="radio" class="chip" aria-checked="${v.id === o.variation}" data-a="opt" data-rid="${id}" data-k="variation" data-v="${v.id}">${esc(v.label)}</button>`).join('')}</div></div>` : '',
-    r.glazes ? `<div class="opt"><span class="opt-label">Glaze</span><div class="chips" role="radiogroup" aria-label="Glaze">${r.glazes.map(g => `<button type="button" role="radio" class="chip" aria-checked="${g.id === o.glaze}" data-a="opt" data-rid="${id}" data-k="glaze" data-v="${g.id}">${esc(g.label)}</button>`).join('')}</div></div>` : '',
+    `<div class="opt"><span class="opt-label">Make</span>${seg('Batch size', r.yields.map(y => [y.id, y.label]).concat(r.have ? [['have','I have…']] : []), o.mode === 'amount' ? 'have' : o.yield, 'opt', `data-rid="${id}" data-k="yield"`)}${o.mode === 'amount' && r.have ? `<div class="amount-box">
+      <span class="opt-label" id="have-${id}">${esc(r.have.question)}</span>
+      <div class="amount-row">${stepper('bananas', o.haveCount, 'have-step', `data-rid="${id}"`, o.haveCount + (o.haveCount === 1 ? ' banana' : ' bananas'))}</div>
+      <p class="fine">Makes ${esc(c.y.label.split('→ ')[1] || c.y.label)}${c.y.pan ? ' · ' + esc(c.y.pan) : ''}. Every ingredient is scaled to match.</p>
+    </div>` : ''}</div>`,
+    r.variations ? `<div class="opt"><span class="opt-label">Version</span>${chipGroup('Version', r.variations.map(v => [v.id, v.label]), o.variation, id, 'variation')}</div>` : '',
+    r.glazes ? `<div class="opt"><span class="opt-label">Glaze</span>${chipGroup('Glaze', r.glazes.map(g => [g.id, g.label]), o.glaze, id, 'glaze')}</div>` : '',
   ].join('');
 
   let panel;
   if (tab === 'ingredients') {
-    panel = ingredientList(c, id) + missingButtons(id);
+    panel = noteCallout(id) + ingredientList(c, id) + missingButtons(id);
   } else if (tab === 'steps') {
     const pn = r.prepNotes;
     panel = `<h3 class="h3 first">Before you start</h3><dl class="kv">
@@ -389,7 +409,7 @@ function viewDessert(id) {
       <p class="fine">${r.bakes ? `About ${tm.active} min hands-on and ${tm.bake} min in the oven; ${fmtDur(tm.total)} including cooling.` : `About ${tm.total} minutes, once the bananas are frozen.`}</p>
       ${r.trouble ? `<h3 class="h3">Texture troubleshooting</h3><dl class="kv">${r.trouble.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>` : ''}`;
   } else if (tab === 'extras') {
-    panel = tierBlock(r, o, id)
+    panel = noteEditor(id) + tierBlock(r, o, id).replace('h3 first', 'h3')
       + (r.variations ? `<h3 class="h3">Versions</h3><dl class="kv">${r.variations.map(v => `<div><dt>${esc(v.label)}</dt><dd>${esc(v.how)}</dd></div>`).join('')}</dl>` : '')
       + `<h3 class="h3">Swaps</h3>${bullets(r.subs)}` + nutritionDetails(nu);
   } else {
@@ -588,7 +608,7 @@ function invKitchen() {
   return `
   <div class="inv-summary"><span><strong class="mono">${counts.in}</strong> in stock</span><span><strong class="mono">${counts.low}</strong> low</span><span><strong class="mono">${counts.out}</strong> out</span></div>
   ${seg('Show', [['all','All'],['low','Running low'],['out','Need to buy']], f, 'inv-filter')}
-  <p class="fine">Tap an item to cycle: In stock → Low → Out.</p>
+  <p class="fine">Tap an item to cycle: In stock → Low → Out. Spices, oil, vanilla and baking powder count as in stock unless you mark them.</p>
   ${empty}
   <div class="inv-cats">${cats || emptyState(f === 'low' ? 'Nothing is running low.' : 'Nothing is out.', '')}</div>
   <div class="danger-zone"><button type="button" class="text-btn" data-a="reset-inv">Reset inventory</button></div>`;
@@ -600,12 +620,18 @@ function invShopping() {
   const toAdd = needs.filter(e => e.st !== 'in' && !onList.has(e.id)).length;
   const tonight = RECIPE[recommendTonight()];
   const bakeSel = DESSERTS.filter(r => S.prep.bake.sel[r.id]);
+  const week = weekCounts();
+  const weekTotal = sum(Object.values(week));
   const srcList = [
-    ['tonight', 'Tonight’s dinner: ' + tonight.short],
+    ['week', 'This week’s dinners: ' + (weekTotal ? weekTotal + ' planned' : 'none picked')],
+    ['tonight', 'Tonight’s dinner' + (S.shopSources.week && weekTotal ? ' (covered by the week plan)' : ': ' + tonight.short)],
     ['prep', 'Prep plan: ' + prepCount() + ' dinners'],
     ['bake', 'Bake plan: ' + (bakeSel.length ? bakeSel.map(r => r.short).join(', ') : 'nothing selected')],
   ];
-  const basedOn = srcList.filter(([k]) => S.shopSources[k]).map(([, l]) => l.split(':')[0].toLowerCase()).join(', ') || 'nothing selected';
+  const basedOn = srcList.filter(([k]) => S.shopSources[k] && !(k === 'week' && !weekTotal) && !(k === 'tonight' && S.shopSources.week && weekTotal)).map(([, l]) => l.split(/[:(]/)[0].trim().toLowerCase()).join(', ') || 'nothing selected';
+  const weekHTML = `<details class="week-plan" data-d="week-plan"${weekTotal ? ' open' : ''}><summary><span class="week-title">This week’s dinners</span><span class="week-count">${weekTotal ? weekTotal + ' planned' : 'Plan ahead'}</span></summary>
+    <ul class="split">${DINNERS.map(r => `<li class="split-row">${bowlSVG(r, 32, getOpts(r).carb)}<span class="split-name">${esc(r.short)}</span>${stepper(r.short + ' this week', week[r.id] || 0, 'week-step', `data-id="${r.id}"`)}</li>`).join('')}</ul>
+    <p class="fine">Each one is a standard serving. The list covers these instead of just tonight. Resets every Monday.${weekTotal ? ` <button type="button" class="text-btn inline" data-a="week-clear">Clear</button>` : ''}</p></details>`;
   const sources = `<details class="more" data-d="shop-sources"><summary>Based on ${esc(basedOn)}</summary><ul class="checks">${srcList.map(([k, l]) =>
     `<li><input type="checkbox" id="src-${k}" data-a="shop-src" data-k="${k}" ${S.shopSources[k] ? 'checked' : ''}><label for="src-${k}">${esc(l)}</label></li>`).join('')}</ul></details>`;
   const addBtn = !S.prefs.trackInventory ? '' : toAdd
@@ -628,6 +654,7 @@ function invShopping() {
     listHTML += `<div class="btn-row">${checked ? `<button type="button" class="btn small primary" data-a="shop-putaway">Put away ${checked} (mark in stock)</button>` : ''}<button type="button" class="text-btn" data-a="shop-clear">Clear list</button></div>`;
   }
   return `
+  ${weekHTML}
   <div class="shop-top">${addBtn}${sources}</div>
   ${listHTML}
   <form class="add-item" data-a="shop-add"><label for="add-item" class="visually-hidden">Add an item</label><input id="add-item" name="item" type="text" placeholder="Add something else" autocomplete="off" maxlength="60"><button type="submit" class="btn small">Add</button></form>`;
@@ -641,7 +668,7 @@ function quickReadiness(q) {
 
 /* ---------- I DON'T WANT TO COOK ---------- */
 function viewNoCook() {
-  const good = S.containers.filter(ct => containerState(ct) === 'good').sort((a, b) => a.packed - b.packed);
+  const good = S.containers.filter(ct => containerState(ct) === 'good').sort((a, b) => eatBy(a) - eatBy(b));
   const frozen = S.containers.filter(ct => ct.frozen);
   const groups = [];
   good.forEach(ct => { const g = groups.find(x => x.rid === ct.rid); if (g) g.items.push(ct); else groups.push({ rid: ct.rid, items: [ct] }); });
@@ -708,6 +735,13 @@ function viewSettings() {
     ${row('Heat', seg('Heat', [['mild','Mild'],['medium','Medium'],['hot','Hot']], p.heat, 'pref', 'data-k="heat"'))}
     ${row('Appearance', seg('Appearance', [['system','System'],['light','Light'],['dark','Dark']], p.theme, 'pref', 'data-k="theme"'))}
   </div>
+  <section class="sec backup">
+    <div class="sec-head"><h2 class="h2">Backup</h2><span class="muted">${S.lastBackup ? 'Last saved ' + fmtDay(S.lastBackup, true) : 'Never backed up'}</span></div>
+    <p class="muted">Your data only lives on this phone. Save a backup to Files, iCloud Drive or a message to yourself; restore it here or on a new phone.</p>
+    <div class="btn-row"><button type="button" class="btn small primary" data-a="backup-save">Save backup</button>
+      <label class="btn small" for="restore-file">Restore from file</label><input type="file" id="restore-file" class="visually-hidden" accept=".json,application/json,text/plain" data-a="restore-file">
+      <button type="button" class="text-btn" data-a="restore-paste">Paste backup text</button></div>
+  </section>
   <details class="sec more-settings" data-d="more-settings"><summary><h2 class="h2">More settings</h2></summary><div class="sec-body">
     ${row('Preferred carb', seg('Preferred carb', [['rice','Rice'],['potato','Potatoes']], p.carb, 'pref', 'data-k="carb"'))}
     ${row('Dessert listed first on Tonight', seg('Dessert preference', [['any','Any']].concat(DESSERTS.map(d => [d.id, d.short.replace('Protein ', '')])), p.dessert, 'pref', 'data-k="dessert"'))}

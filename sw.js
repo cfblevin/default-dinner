@@ -2,16 +2,35 @@
    Keeps a copy of the whole app on the device. The version string changes
    with every build, so a new build is downloaded in the background the next
    time the phone is online and used from the following launch. */
-const VERSION = '04f00cbcf233';
+const VERSION = 'ab4ca70e8eb6';
 const CACHE = 'default-dinner-' + VERSION;
-const ASSETS = ["./", "./index.html", "./manifest.webmanifest", "./icons/icon-180.png", "./icons/icon-192.png", "./icons/icon-512.png", "./icons/icon-maskable-512.png", "./fonts/ibm-plex-mono-400.woff2", "./fonts/ibm-plex-mono-500.woff2", "./fonts/ibm-plex-mono-600.woff2", "./fonts/schibsted-grotesk.woff2"];
+const PAGE = './index.html';
+const ASSETS = ["./", "./index.html", "./manifest.webmanifest", "./fonts/ibm-plex-mono-400.woff2", "./fonts/ibm-plex-mono-500.woff2", "./fonts/ibm-plex-mono-600.woff2", "./fonts/schibsted-grotesk.woff2", "./icons/icon-180.png", "./icons/icon-192.png", "./icons/icon-512.png", "./icons/icon-maskable-512.png"];
+
+async function precache() {
+  // The page itself must be this exact version. A CDN can briefly serve the
+  // previous index.html, so check the embedded version and bust the cache if needed.
+  let page = null;
+  for (const url of [PAGE + '?v=' + VERSION, PAGE + '?v=' + VERSION + '-' + Date.now()]) {
+    const res = await fetch(url, { cache: 'reload' });
+    if (!res.ok) continue;
+    const html = await res.text();
+    if (html.includes('content="' + VERSION + '"')) { page = html; break; }
+  }
+  if (!page) throw new Error('New version not available yet'); // keep the old copy; try again next launch
+  const cache = await caches.open(CACHE);
+  const headers = { 'Content-Type': 'text/html; charset=utf-8' };
+  await cache.put(PAGE, new Response(page, { headers }));
+  await cache.put('./', new Response(page, { headers }));
+  // Everything else is best effort: a missing icon or font must not block the update.
+  await Promise.allSettled(ASSETS.filter(a => a !== './' && a !== PAGE).map(async url => {
+    const res = await fetch(url, { cache: 'reload' });
+    if (res.ok) await cache.put(url, res);
+  }));
+}
 
 self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE)
-      .then(cache => cache.addAll(ASSETS.map(url => new Request(url, { cache: 'reload' }))))
-      .then(() => self.skipWaiting())
-  );
+  event.waitUntil(precache().then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', event => {
@@ -28,11 +47,11 @@ self.addEventListener('fetch', event => {
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
 
-  // Opening the app: always answer from the saved copy so it starts without a connection.
+  // Opening the app: answer from the saved copy so it starts without a connection.
   if (req.mode === 'navigate') {
     event.respondWith(
       caches.open(CACHE).then(cache =>
-        cache.match('./index.html').then(hit => hit || fetch(req).catch(() => cache.match('./')))
+        cache.match(PAGE).then(hit => hit || fetch(req).catch(() => cache.match('./')))
       )
     );
     return;

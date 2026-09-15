@@ -42,7 +42,6 @@ hosted_shell = shell.replace(GOOGLE, f'<style>\n{local_fonts}</style>\n')
 hosted = document(page(hosted_shell, pre_script='<script>window.__OFFLINE__ = true;</script>\n'),
                   head_extra='<link rel="manifest" href="manifest.webmanifest">\n<link rel="apple-touch-icon" href="icons/icon-180.png">\n<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">\n')
 site.mkdir(exist_ok=True)
-(site/'index.html').write_text(hosted)
 manifest = {
     "name": "Default Dinner", "short_name": "Dinner", "description": "Tonight's dinner, prep, desserts and kitchen inventory.",
     "start_url": "./", "scope": "./", "display": "standalone", "orientation": "portrait",
@@ -53,12 +52,17 @@ manifest = {
         {"src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"},
     ],
 }
-(site/'manifest.webmanifest').write_text(json.dumps(manifest, indent=2) + '\n')
-assets = ['./', './index.html', './manifest.webmanifest'] + ['./' + p.relative_to(site).as_posix() for d in ('icons', 'fonts') for p in sorted((site/d).glob('*')) if p.is_file()]
-digest = hashlib.sha256()
-for a in assets[1:]:
-    digest.update((site/a[2:]).read_bytes())
+manifest_text = json.dumps(manifest, indent=2) + '\n'
+files = sorted(p for d in ('icons', 'fonts') for p in (site/d).glob('*') if p.is_file())
+assets = ['./', './index.html', './manifest.webmanifest'] + ['./' + p.relative_to(site).as_posix() for p in files]
+digest = hashlib.sha256(hosted.encode() + manifest_text.encode() + (src/'sw.js').read_bytes())
+for p in files:
+    digest.update(p.read_bytes())
 version = digest.hexdigest()[:12]
+# The service worker checks this marker to be sure it cached the matching page.
+hosted = hosted.replace('<meta charset="utf-8">', '<meta charset="utf-8">\n<meta name="app-version" content="' + version + '">', 1)
+(site/'index.html').write_text(hosted)
+(site/'manifest.webmanifest').write_text(manifest_text)
 sw = (src/'sw.js').read_text().replace('__VERSION__', version).replace('__ASSETS__', json.dumps(assets))
 (site/'sw.js').write_text(sw)
 print('built', 'version', version, '| index', len(hosted)//1024, 'KB |', len(assets), 'offline files')

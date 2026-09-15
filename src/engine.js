@@ -33,7 +33,7 @@ function defaultState() {
     inv: {},
     invDates: {},
     shopping: [],
-    shopSources: { tonight:true, prep:false, bake:false },
+    shopSources: { tonight:true, week:true, prep:false, bake:false },
     favorites: [],
     lastMeal: null,
     tonight: null,
@@ -43,6 +43,9 @@ function defaultState() {
     prep: { days:4, custom:5, split:null, done:{}, comp:{ rice:2, chicken:1.5, beef:1.25, broccoli:4 }, compDone:{}, bake:{ sel:{}, done:{} }, packed:{} },
     containers: [],
     history: [],
+    notes: {},
+    weekPlan: { start:0, counts:{} },
+    lastBackup: 0,
     ui: { prepTab:'dinners', invTab:'kitchen', invFilter:'all', rtabs:{} },
   };
 }
@@ -60,8 +63,16 @@ function loadState() {
   ['done','compDone','packed'].forEach(k => { if (!isObj(out.prep[k])) out.prep[k] = {}; });
   out.ui = Object.assign(fresh.ui, isObj(s.ui) ? s.ui : {});
   if (!isObj(out.ui.rtabs)) out.ui.rtabs = {};
+  Object.keys(out.ui.rtabs).forEach(k => { if (typeof out.ui.rtabs[k] !== 'string') delete out.ui.rtabs[k]; });
+  if (!['all','low','out'].includes(out.ui.invFilter)) out.ui.invFilter = 'all';
+  if (!['kitchen','shopping'].includes(out.ui.invTab)) out.ui.invTab = 'kitchen';
+  if (!isObj(out.notes)) out.notes = {};
+  Object.keys(out.notes).forEach(k => { if (!RECIPE[k] || typeof out.notes[k] !== 'string') delete out.notes[k]; });
+  if (!isObj(out.weekPlan) || !isObj(out.weekPlan.counts) || typeof out.weekPlan.start !== 'number') out.weekPlan = { start:0, counts:{} };
+  if (typeof out.lastBackup !== 'number' || !isFinite(out.lastBackup)) out.lastBackup = 0;
   out.shopSources = Object.assign(fresh.shopSources, isObj(s.shopSources) ? s.shopSources : {});
   ['inv','invDates','opts','checks'].forEach(k => { if (!isObj(out[k])) out[k] = {}; });
+  Object.keys(out.invDates).forEach(k => { if (typeof out.invDates[k] !== 'number' || !isFinite(out.invDates[k])) delete out.invDates[k]; });
   ['shopping','favorites','containers','history'].forEach(k => { if (!Array.isArray(out[k])) out[k] = []; });
   if (!isObj(out.prep.bake.sel)) out.prep.bake.sel = {};
   if (!isObj(out.prep.bake.done)) out.prep.bake.done = {};
@@ -75,6 +86,10 @@ function loadState() {
   out.favorites = out.favorites.filter(id => RECIPE[id]);
   if (out.tonight && (!isObj(out.tonight) || !RECIPE[out.tonight.id])) out.tonight = null;
   if (out.cook && (!isObj(out.cook) || !RECIPE[out.cook.rid] || !isObj(out.cook.timers) || typeof out.cook.i !== 'number')) out.cook = null;
+  if (out.cook) {
+    Object.keys(out.cook.timers).forEach(k => { const t = out.cook.timers[k]; if (!isObj(t) || !(t.total > 0)) delete out.cook.timers[k]; });
+    if (!isObj(out.cook.opts)) out.cook.opts = {};
+  }
   // v2: meal prep is tucked away, so shopping no longer includes the prep plan by default
   if (!(s.v >= 2)) { out.shopSources.prep = false; out.v = 2; }
   // keep history bounded
@@ -172,7 +187,7 @@ function fmtQ(q, u) {
 
 /* ---------- Recipe options ---------- */
 const SERVING_OPTS = [1, 2, 4, 6];
-function portionFactor() { return S.prefs.portion === 'large' ? { protein:1.25, carb:4/3 } : { protein:1, carb:1 }; }
+function portionFactor(portion) { return (portion || S.prefs.portion) === 'large' ? { protein:1.25, carb:4/3 } : { protein:1, carb:1 }; }
 
 function getOpts(r) {
   const saved = S.opts[r.id] || {};
@@ -186,6 +201,7 @@ function getOpts(r) {
     o.amountOz = Number.isFinite(+o.amountOz) && +o.amountOz > 0 ? clamp(+o.amountOz, 2, 96) : Math.round(o.servings * prot.q * portionFactor().protein);
     o.plates = Number.isInteger(+o.plates) && +o.plates >= 1 && +o.plates <= 6 ? +o.plates : null;
     o.cut = r.hasCut && o.cut === 'thigh' ? 'thigh' : 'breast';
+    if (o.mode === 'amount' && o.amountDate !== dayKey()) { o.mode = 'servings'; o.plates = null; }
     o.carb = r.hasCarbChoice ? (['rice','potato'].includes(o.carb) ? o.carb : (S.prefs.carb === 'potato' ? 'potato' : 'rice')) : 'rice';
     if (!['fresh','ready'].includes(o.rice)) o.rice = S.prefs.trackInventory && ['in','low'].includes(S.inv.p_rice) ? 'ready' : 'fresh';
     if (r.hasSauceChoice && !['regular','smoky','spicy'].includes(o.sauce)) o.sauce = S.prefs.heat === 'mild' ? 'regular' : 'spicy';
@@ -193,10 +209,17 @@ function getOpts(r) {
     if (!r.yields.some(y => y.id === o.yield)) o.yield = r.yields[0].id;
     if (r.variations && !r.variations.some(v => v.id === o.variation)) o.variation = r.variations[0].id;
     if (r.glazes && !r.glazes.some(g => g.id === o.glaze)) o.glaze = 'chocolate';
+    o.mode = r.have && o.mode === 'amount' && o.amountDate === dayKey() ? 'amount' : 'servings';
+    if (r.have) o.haveCount = Number.isInteger(+o.haveCount) ? clamp(+o.haveCount, r.have.min, r.have.max) : r.have.base;
   }
   return o;
 }
-function setOpt(rid, k, v) { S.opts[rid] = Object.assign({}, S.opts[rid], { [k]: v }); save(); }
+function setOpt(rid, k, v) {
+  const patch = { [k]: v };
+  if (['mode','amountOz','plates','amountUnit','haveCount'].includes(k)) patch.amountDate = dayKey();
+  S.opts[rid] = Object.assign({}, S.opts[rid], patch);
+  save();
+}
 
 function cond(expr, c) {
   if (!expr) return true;
@@ -229,10 +252,10 @@ function tierAdds(r, tier) {
 /* Build a fully-resolved recipe context: scaled ingredients, options, yield. */
 function build(r, overrides) {
   const o = Object.assign(getOpts(r), overrides || {});
-  const c = Object.assign({}, o, { r, heat: S.prefs.heat, ings: [] });
+  const c = Object.assign({}, o, { r, heat: o.heat || S.prefs.heat, portion: o.portion || S.prefs.portion, ings: [] });
   const push = (ing, scale, extra) => c.ings.push(Object.assign({}, ing, { sq: ing.q * scale, sg: ing.g * scale, key: ing.key || ing.id, extra }));
   if (r.type === 'dinner') {
-    const pf = portionFactor();
+    const pf = portionFactor(c.portion);
     // Planning code passes explicit servings; "I have…" only applies on the recipe itself.
     if (overrides && overrides.servings != null && overrides.mode == null) c.mode = 'servings';
     const prot = r.ingredients.find(i => i.role === 'protein');
@@ -245,17 +268,20 @@ function build(r, overrides) {
     }
     c.scaleN = scaleN;
     c.n = c.pieces = c.plates;
+    c.proteinOz = prot.q * scaleN * pf.protein;
+    c.big = c.proteinOz >= 28; // about 1¾ lb or more: one skillet won't brown it all
     for (let ing of r.ingredients) {
       if (!cond(ing.if, c)) continue;
       if (ing.id === 'chicken' && c.cut === 'thigh') {
-        ing = Object.assign({}, ing, { id:'thighs', key:'chicken', name:'Chicken thighs', any:['thighs','p_chicken'], note:'raw, boneless skinless · about 8 oz cooked', sub:'Chicken breast works too: switch Chicken to Breast.' });
+        ing = Object.assign({}, ing, { id:'thighs', key:'chicken', name:'Chicken thighs', any:['thighs','p_chicken'], note:'raw, boneless skinless · about {cooked} cooked', sub:'Chicken breast works too: switch Chicken to Breast.' });
       }
       push(ing, scaleN * (ing.role === 'protein' ? pf.protein : ing.role === 'carb' ? pf.carb : 1));
     }
-    (r.heat[S.prefs.heat] || []).forEach(ing => push(ing, scaleN, 'Heat'));
+    (r.heat[c.heat] || []).forEach(ing => push(ing, scaleN, 'Heat'));
     tierAdds(r, o.tier).forEach(([ing, label]) => push(ing, c.plates, label));
   } else {
-    const y = r.yields.find(y => y.id === o.yield) || r.yields[0];
+    if (overrides && overrides.yield != null && overrides.mode == null) c.mode = 'servings';
+    const y = c.mode === 'amount' && r.have ? haveYield(r, c.haveCount) : (r.yields.find(y => y.id === o.yield) || r.yields[0]);
     c.y = y; c.n = c.pieces = y.pieces;
     const v = r.variations ? (r.variations.find(v => v.id === o.variation) || r.variations[0]) : null;
     c.v = v;
@@ -280,6 +306,16 @@ function amountLabel(c) {
   if (c.mode !== 'amount') return c.n + ' ' + (c.n > 1 ? 'servings' : 'serving');
   const p = c.ings.find(i => i.role === 'protein');
   return fmtQ(c.amountOz, 'oz') + ' ' + lcName(p) + ' · ' + c.plates + ' ' + (c.plates > 1 ? 'plates' : 'plate');
+}
+// Dessert batch sized to what you have (bananas).
+function haveYield(r, count) {
+  const f = count / r.have.base;
+  const b = count + (count === 1 ? ' banana' : ' bananas');
+  if (r.id === 'icecream') return { id:'have', label:b + ' → ' + count + (count === 1 ? ' bowl' : ' bowls'), f, pieces:count, unit:'bowl' };
+  if (f < 0.75) { const m = Math.max(2, Math.round(f * 12)); return { id:'have', label:b + ' → ' + m + ' muffins', f, pieces:m, unit:'muffin', pan:'muffin tin (' + m + ' cups, lined or sprayed)', bake:'20–25 minutes', bakeMin:22 }; }
+  if (f <= 1.15) return { id:'have', label:b + ' → 1 loaf', f, pieces:Math.round(10 * f), unit:'slice', pan:'8½ × 4½-inch loaf pan', bake:f < 0.9 ? '45–55 minutes' : '50–60 minutes', bakeMin:f < 0.9 ? 50 : 55, loaf:true };
+  const m = Math.max(2, Math.round((f - 1) * 12));
+  return { id:'have', label:b + ' → 1 loaf + ' + m + ' muffins', f, pieces:10 + m, unit:'piece', pan:'8½ × 4½-inch loaf pan (fill it about ¾ full; the rest goes into ' + m + ' lined muffin cups)', bake:'about 50–60 minutes for the loaf and 20–25 for the muffins (take the muffins out first)', bakeMin:55, loaf:true };
 }
 function bakeMin(c) { return c.y ? (c.y.bakeMin || 0) + ((c.v && c.v.bakeExtra) || 0) : 0; }
 
@@ -312,6 +348,15 @@ function fill(text, c) {
       switch (k) {
         case 'q': { const i = c.byKey[arg]; return i ? fmtQ(i.sq, i.u) : ''; }
         case 'dry': { const i = c.byKey.rice; return i ? fmtQ(i.sq / 3, 'cup') : ''; }
+        case 'potSize': { const i = c.byKey.rice; const dry = i ? i.sq / 3 : 0; return dry <= 1 ? 'small pot' : dry <= 2.5 ? 'medium pot' : 'large pot'; }
+        case 'riceMin': { const i = c.byKey.rice; return i && i.sq / 3 > 2.5 ? '15' : '12'; }
+        case 'cooked': { const p = c.ings.find(x => x.role === 'protein'); return p ? fmtQ(p.sq * (COOKED_YIELD[p.id] || 0.75), 'oz') : ''; }
+        case 'brownTime': return c.big ? '10–12 minutes total (6–8 per batch if you split it)' : '6–8 minutes total';
+        case 'searTime': return c.big ? '12–14 minutes total (8–10 per batch if you split it)' : '8–10 minutes total';
+        case 'vegWater': { const cups = vegMicroCups(c); return cups > 2 && cups <= 4 ? '3 tbsp' : '2 tbsp'; }
+        case 'vegTime': { const cups = vegMicroCups(c); return cups > 4 ? 'in batches of about 3 cups (2 tbsp water per batch), 3–4 minutes each' : cups > 2 ? 'for 5–6 minutes (frozen: 6–7), stirring halfway' : 'for 3–4 minutes (frozen: 4–5)'; }
+        case 'potTime': { const i = c.byKey.potatoes; const lb = i ? i.sq / 16 : 0; return lb > 2.2 ? 'in batches of about 1 lb, 6 minutes each' : lb > 1.1 ? '9–10 minutes, stirring halfway' : '6 minutes'; }
+        case 'potPans': { const i = c.byKey.potatoes; return i && i.sq > 18 ? ' (use two pans, or crisp them in batches)' : ''; }
         case 'water': { const i = c.byKey.rice; if (!i) return ''; const dry = i.sq / 3; return fmtQ(dry * 1.25 + (dry < 1 ? 0.125 : 0), 'cup'); }
         case 'heat': { const h = c.r.heatText; if (c.heat === 'mild' || !h) return ''; return typeof h === 'string' ? h : (h[c.heat] || ''); }
         case 'varWet': return (c.v && c.v.wet) || '';
@@ -333,7 +378,7 @@ function fill(text, c) {
           const extra = c.v && c.v.bakeExtra ? ' (add ' + c.v.bakeExtra + ' minutes for ' + c.v.label.toLowerCase() + ')' : '';
           return c.y.bake + extra;
         }
-        case 'tent': return c.r.id === 'bread' && c.y && c.y.id === 'full' ? ' At 35 minutes, if the top is already deep brown, lay a sheet of foil loosely over it.' : '';
+        case 'tent': return c.r.id === 'bread' && c.y && (c.y.id === 'full' || c.y.loaf) ? ' At 35 minutes, if the top is already deep brown, lay a sheet of foil loosely over it.' : '';
         case 'lining': return c.r.prepNotes ? 'Prep the ' + (c.y ? c.y.pan : 'pan') + ': ' + lcFirst(c.r.prepNotes.lining) + '.' : '';
         case 'pieces': return String(c.pieces);
         case 'glazeMake': return (c.g && c.g.make) || '';
@@ -347,7 +392,10 @@ function fill(text, c) {
 
 /* ---------- Steps & timeline ---------- */
 function stepsFor(c) {
-  const bigBatch = c.r.type === 'dinner' && (c.scaleN || c.n) >= 3;
+  const bigBatch = c.r.type === 'dinner' && !!c.big;
+  const cups = c.r.type === 'dinner' ? vegMicroCups(c) : 0;
+  const potLb = c.byKey && c.byKey.potatoes ? c.byKey.potatoes.sq / 16 : 0;
+  const dryRice = c.byKey && c.byKey.rice ? c.byKey.rice.sq / 3 : 0;
   return c.r.steps.filter(s => cond(s.if, c)).map(s => {
     const st = Object.assign({}, s);
     if (bigBatch && (s.key === 'beef' || s.key === 'chicken')) {
@@ -356,6 +404,11 @@ function stepsFor(c) {
       st.batch = 'Big batch: use your largest pan, or cook in two batches so it browns instead of steaming. Allow about 4 extra minutes.';
     }
     if (c.cut === 'thigh' && st.safety === CHICKEN_SAFETY) st.safety = THIGH_SAFETY;
+    if (s.key === 'veg' && cups > 2 && cups <= 4) { st.timer = 6; st.passive = 6; }
+    if (s.key === 'veg' && cups > 4) { st.passive = Math.ceil(cups / 3) * 4; }
+    if (s.key === 'potmic' && potLb > 1.1 && potLb <= 2.2) { st.timer = 10; st.passive = 10; }
+    if (s.key === 'potmic' && potLb > 2.2) { st.passive = Math.ceil(potLb) * 6; }
+    if (s.key === 'rice' && dryRice > 2.5) { st.timer = 15; st.passive = 20; }
     if (st.passive === 'bake') st.passive = bakeMin(c);
     if (st.timer === 'bake') st.timer = bakeMin(c);
     if (c.r.id === 'donuts' && st.key === 'bake' && c.y && c.y.id === 'twelve') st.batch = 'One pan at a time? Bake the second pan right after the first; wipe and re-grease it first.';
@@ -459,7 +512,8 @@ const RANK = { out:0, low:1, in:2 };
 function inv(id) {
   if (!S.prefs.trackInventory) return 'in';
   const v = S.inv[id];
-  return v === 'in' || v === 'low' ? v : 'out';
+  if (v === 'in' || v === 'low' || v === 'out') return v;
+  return ITEM[id] && ITEM[id].staple ? 'in' : 'out'; // pantry basics are assumed on hand
 }
 function setInv(id, st) { S.inv[id] = st; if (ITEM[id] && ITEM[id].prepped) { if (st === 'out') delete S.invDates[id]; else if (!S.invDates[id]) S.invDates[id] = Date.now(); } }
 function cycleInv(id) { const cur = inv(id); setInv(id, cur === 'in' ? 'low' : cur === 'low' ? 'out' : 'in'); save(); }
@@ -556,6 +610,8 @@ function recommendTonight() {
       if (S.prefs.defaultMeal === r.id) s += 1;
       if (S.prefs.trackInventory) s += rd.level === 'ready' ? 4 : rd.level === 'almost' ? 2 - Math.min(rd.missing.length, 6) * 0.25 : 0;
       if (Date.now() - lastCooked(r.id) < 2 * DAY) s -= 3;
+      const planned = weekCounts()[r.id] || 0;
+      if (planned > cookedThisWeek(r.id)) s += 1.5;
       s += ((doy + idx) % 4) * 0.1;
       if (s > bs) { bs = s; best = r.id; }
     });
@@ -590,6 +646,27 @@ function weekSummary() {
   };
 }
 
+/* ---------- This week's dinners ---------- */
+function weekStart(t = Date.now()) {
+  const d = new Date(startOfDay(t));
+  const back = (d.getDay() + 6) % 7; // Monday
+  d.setDate(d.getDate() - back);
+  return d.getTime();
+}
+function weekCounts() { return S.weekPlan && S.weekPlan.start === weekStart() ? S.weekPlan.counts : {}; }
+function setWeekCount(id, n) {
+  const counts = Object.assign({}, weekCounts(), { [id]: clamp(n, 0, 7) });
+  S.weekPlan = { start: weekStart(), counts };
+  save();
+}
+function cookedThisWeek(rid) {
+  const since = weekStart();
+  return S.history.filter(h => h.t >= since && h.rid === rid && (h.kind === 'dinner' || h.kind === 'leftover')).length;
+}
+function vegMicroCups(c) {
+  return sum(['broccoli','corn'].map(k => c.byKey && c.byKey[k] && c.byKey[k].u === 'cup' ? c.byKey[k].sq : 0)) || 0;
+}
+
 /* ---------- Containers (packed meals) ---------- */
 const FRIDGE_DAYS = 4;  // USDA: cooked leftovers 3–4 days. Eat-by is the end of day 4 after cooking.
 const FRIDGE_SLOTS = 4; // containers 1–4 in the fridge, the rest frozen
@@ -607,7 +684,7 @@ const PACK_SEPARATE = {
   med:'cucumber, tomato, spinach and garlic yogurt sauce',
   bbq:'pickles, green onion and extra sauce',
 };
-const COOKED_YIELD = { beef:0.8, chicken:0.727 };
+const COOKED_YIELD = { beef:0.8, chicken:0.727, thighs:0.7 };
 function containerContents(r) {
   const c = build(r, { servings:1, tier:'base' });
   const parts = [];
@@ -800,7 +877,11 @@ function bakeTasks() {
 /* ---------- Shopping ---------- */
 function shoppingNeeds() {
   const builds = [];
-  if (S.shopSources.tonight) { const r = RECIPE[recommendTonight()]; builds.push({ c: build(r), raw:false }); }
+  const week = weekCounts();
+  const weekTotal = sum(Object.values(week));
+  if (S.shopSources.week && weekTotal) {
+    DINNERS.filter(r => week[r.id] > 0).forEach(r => builds.push({ c: build(r, { servings: week[r.id], tier: getOpts(r).tier }), raw:false }));
+  } else if (S.shopSources.tonight) { const r = RECIPE[recommendTonight()]; builds.push({ c: build(r), raw:false }); }
   if (S.shopSources.prep) planBuilds(prepSplit()).forEach(c => builds.push({ c, raw:true }));
   if (S.shopSources.bake) DESSERTS.filter(r => S.prep.bake.sel[r.id]).forEach(r => builds.push({ c: build(r, { yield:S.prep.bake.sel[r.id].yield, tier:'base' }), raw:true }));
   const need = {};
