@@ -108,7 +108,7 @@ function renderCook() {
       : `<h2 class="h3">Get out</h2>${bullets(r.mise)}<h2 class="h3">Equipment</h2>${bullets(r.equipment)}`;
     const summary = isBake
       ? `${esc(c.y.label)}${c.v ? ' · ' + esc(c.v.label) : ''}${c.g ? ' · ' + esc(c.g.label) + (c.g.id === 'none' ? '' : ' glaze') : ''}`
-      : `${c.n} ${c.n > 1 ? 'servings' : 'serving'} · ${c.tier[0].toUpperCase() + c.tier.slice(1)}${r.hasCarbChoice ? ' · ' + (c.carb === 'potato' ? 'potatoes' : 'rice') : ''}${c.carb === 'rice' ? ' · ' + (c.rice === 'ready' ? 'rice already cooked' : 'fresh rice') : ''}`;
+      : `${esc(amountLabel(c))} · ${c.tier[0].toUpperCase() + c.tier.slice(1)}${r.hasCarbChoice ? ' · ' + (c.carb === 'potato' ? 'potatoes' : 'rice') : ''}${c.carb === 'rice' ? ' · ' + (c.rice === 'ready' ? 'rice already cooked' : 'fresh rice') : ''}`;
     body = `<p class="cook-step mono">${isBake ? 'Before you start' : 'Mise en place'} · about ${fmtDur(sch.total)}</p>
       <h1 id="cook-title" class="cook-title">${isBake ? 'Before you start' : 'Get everything out'}</h1>
       <p class="cook-sub">${summary}</p>
@@ -140,7 +140,7 @@ function renderCook() {
       ${r.type === 'dinner'
         ? `<h2 class="h3">If you’re not finishing it</h2>${bullets(r.leftovers.separate)}<h2 class="h3">Storage</h2>${bullets(r.leftovers.storage.slice(0, 2))}`
         : `<dl class="kv"><div><dt>Fridge</dt><dd>${esc(r.storage.fridge)}</dd></div><div><dt>Freezer</dt><dd>${esc(r.storage.freezer)}</dd></div><div><dt>Reheat</dt><dd>${esc(r.storage.reheat)}</dd></div></dl>`}
-      ${extra ? (() => { const left = c.n - 1, fridge = Math.min(left, FRIDGE_SLOTS - 1), freezer = left - fridge; return `<div class="check-line"><input type="checkbox" id="cook-pack" checked><label for="cook-pack">Save the other ${left} ${left > 1 ? 'servings' : 'serving'} as containers: ${fridge} in the fridge${freezer ? `, ${freezer} in the freezer` : ''}</label></div>`; })() : ''}
+      ${extra ? (() => { const left = c.n - 1, fridge = Math.min(left, FRIDGE_SLOTS - 1), freezer = left - fridge; const word = c.mode === 'amount' ? 'plate' : 'serving'; return `<div class="check-line"><input type="checkbox" id="cook-pack" checked><label for="cook-pack">${left === 1 ? `Save the other ${word} as a fridge container` : `Save the other ${left} ${word}s as containers: ${fridge} in the fridge${freezer ? `, ${freezer} in the freezer` : ''}`}</label></div>`; })() : ''}
       <p class="fine">~${roundKcal(nu.kcal)} kcal · ${roundG(nu.protein)} g protein per ${isBake ? c.y.unit : 'serving'}, approximate.</p>`;
     controls = `<button type="button" class="btn" data-a="cook-back">Back</button><button type="button" class="btn primary span3" data-a="cook-finish">Log it and finish</button>`;
   }
@@ -199,7 +199,7 @@ function tick() {
 }
 
 /* ---------- Onboarding ---------- */
-const OB_ITEMS = ['chicken','beef','rice','ricepouch','broccoli','yogurt','eggs','protein','bananas','oats','blackbeans','corn','lettuce','cucumber','tomato','spinach','salsa','bbq','soy','honey','garlic','lemon','lime','milk','cocoa','chips'];
+const OB_ITEMS = ['chicken','thighs','beef','rice','ricepouch','broccoli','yogurt','eggs','protein','bananas','oats','blackbeans','corn','lettuce','cucumber','tomato','spinach','salsa','bbq','soy','honey','garlic','lemon','lime','milk','cocoa','chips'];
 function renderOnboarding() {
   const root = $('#onboarding');
   if (S.onboarded) { root.hidden = true; root.innerHTML = ''; return; }
@@ -348,10 +348,17 @@ const ACT = {
   opt(el) {
     const { rid, k } = el.dataset;
     let v = el.dataset.v;
-    if (k === 'servings') v = SERVING_OPTS.includes(+v) ? +v : 1;
+    if (k === 'servings') {
+      if (v === 'amount') { setOpt(rid, 'mode', 'amount'); render(); const inp = document.getElementById('amount-' + rid); if (inp) inp.focus({ preventScroll:true }); return; }
+      v = SERVING_OPTS.includes(+v) ? +v : 1;
+      setOpt(rid, 'mode', 'servings');
+      setOpt(rid, 'amountOz', null); setOpt(rid, 'plates', null);
+    }
+    if (k === 'plates') v = clamp(parseInt(v, 10) || 1, 1, 6);
     setOpt(rid, k, v);
     render();
   },
+  'amount-preset'(el) { setOpt(el.dataset.rid, 'amountOz', +el.dataset.v); setOpt(el.dataset.rid, 'plates', null); render(); },
   pref(el) {
     const k = el.dataset.k, v = el.dataset.v;
     S.prefs[k] = v;
@@ -540,6 +547,16 @@ const ACT = {
 };
 
 const CHANGE = {
+  'amount-num'(el) {
+    const rid = el.dataset.rid;
+    const o = getOpts(RECIPE[rid]);
+    const val = parseFloat(String(el.value).replace(',', '.'));
+    const oz = o.amountUnit === 'lb' ? val * 16 : val;
+    if (!(oz >= 2 && oz <= 96)) { toast('Enter an amount between 2 oz and 6 lb'); render(); return; }
+    setOpt(rid, 'amountOz', Math.round(oz * 10) / 10);
+    setOpt(rid, 'plates', null);
+    render();
+  },
   check(el) { const { rid, key } = el.dataset; S.checks[rid] = Object.assign({}, S.checks[rid], { [key]: el.checked }); save(); },
   'prep-done'(el) { S.prep.done[el.dataset.id] = el.checked; save(); render(); },
   'comp-done'(el) { S.prep.compDone[el.dataset.id] = el.checked; save(); render(); },

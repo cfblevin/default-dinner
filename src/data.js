@@ -12,6 +12,7 @@ const NUT_KEYS = ['kcal','protein','carbs','fat','fiber','sodium','potassium','c
 const NUT = {
   beef:        [152,20.9,0,7,0,66,336,12,2.3,0,0,0.1,21],       // 93/7 raw
   chicken:     [120,22.5,0,2.6,0,45,334,5,0.4,9,0,0.1,28],      // breast raw
+  thighs:      [121,19.7,0,4.1,0,95,222,7,0.8,17,0,0.1,23],     // boneless skinless thigh raw
   p_beef:      [200,27.5,0,9.5,0,85,420,15,3,0,0,0.1,26],       // cooked
   p_chicken:   [165,31,0,3.6,0,74,256,15,1,9,0,0.1,29],         // cooked
   yogurt:      [73,10,3.9,1.9,0,34,141,115,0.1,20,0,0,11],      // 2% Greek
@@ -107,6 +108,7 @@ const AISLES = ['Meat','Produce','Dairy & eggs','Frozen','Grains & dry goods','C
 const ITEMS = [
   // PROTEIN
   { id:'chicken', name:'Chicken breast', cat:'protein', aisle:'Meat', shop:{u:'lb'} },
+  { id:'thighs', name:'Chicken thighs', cat:'protein', aisle:'Meat', shop:{u:'lb'} },
   { id:'beef', name:'Lean ground beef (93/7)', cat:'protein', aisle:'Meat', shop:{u:'lb'} },
   { id:'yogurt', name:'Plain Greek yogurt', cat:'protein', aisle:'Dairy & eggs', shop:{u:'unit', g:240, one:'cup', many:'cups', hint:'32-oz tub ≈ 3½ cups'} },
   { id:'eggs', name:'Eggs', cat:'protein', aisle:'Dairy & eggs', shop:{u:'unit', g:50, one:'egg', many:'eggs', round:1} },
@@ -200,6 +202,7 @@ const WARM_RICE_STEP = {
   text:'Microwave {q:rice} cooked rice covered with a damp paper towel for 1½–2 minutes, until steaming. Using a pouch? Follow the package — usually 90 seconds.',
 };
 const CHICKEN_SAFETY = 'Chicken is safe at 165°F in the thickest piece: no pink inside, juices run clear.';
+const THIGH_SAFETY = 'Thighs are safe at 165°F, but they’re juiciest at about 175°F in the thickest piece. No pink inside.';
 const BEEF_SAFETY = 'Ground beef is safe at 160°F: no pink left.';
 
 /* ---------- Dinners ---------- */
@@ -268,7 +271,7 @@ const RECIPES = [
 {
   id:'mexican', type:'dinner', name:'Mexican Chicken Bowl', short:'Mexican Chicken',
   flavor:'Cumin-paprika chicken with lime, black beans, corn and a cool salsa-yogurt sauce. Mild by default.',
-  difficulty:'Easy', protein:'chicken', tags:['chicken','mild','no avocado'],
+  difficulty:'Easy', protein:'chicken', hasCut:true, tags:['chicken','mild','no avocado'],
   bowl:[['rice',0.34],['chicken',0.30],['lettuce',0.14],['beans',0.11],['corn',0.11]], garnish:'salsa',
   ingredients:[
     { id:'chicken', q:11, u:'oz', g:312, role:'protein', core:true, any:['chicken','p_chicken'], note:'raw breast · about 8 oz cooked', sub:'Boneless thighs stay juicier and reheat better. Same method; cook to 175°F.' },
@@ -337,7 +340,7 @@ const RECIPES = [
 {
   id:'med', type:'dinner', name:'Mediterranean Chicken Bowl', short:'Mediterranean Chicken',
   flavor:'Lemon-oregano chicken with cucumber, tomato and spinach, finished with a garlic yogurt sauce.',
-  difficulty:'Easy', protein:'chicken', tags:['chicken','fresh','bright'],
+  difficulty:'Easy', protein:'chicken', hasCut:true, tags:['chicken','fresh','bright'],
   bowl:[['rice',0.34],['chicken',0.30],['spinach',0.12],['cucumber',0.12],['tomato',0.12]], garnish:'yogurt',
   ingredients:[
     { id:'chicken', q:11, u:'oz', g:312, role:'protein', core:true, any:['chicken','p_chicken'], note:'raw breast · about 8 oz cooked', sub:'Boneless thighs stay juicier. Cook to 175°F.' },

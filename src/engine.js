@@ -180,6 +180,12 @@ function getOpts(r) {
   if (!['base','better','loaded'].includes(o.tier)) o.tier = 'base';
   if (r.type === 'dinner') {
     o.servings = SERVING_OPTS.includes(+o.servings) ? +o.servings : 1;
+    o.mode = o.mode === 'amount' ? 'amount' : 'servings';
+    o.amountUnit = o.amountUnit === 'oz' ? 'oz' : 'lb';
+    const prot = r.ingredients.find(i => i.role === 'protein');
+    o.amountOz = Number.isFinite(+o.amountOz) && +o.amountOz > 0 ? clamp(+o.amountOz, 2, 96) : Math.round(o.servings * prot.q * portionFactor().protein);
+    o.plates = Number.isInteger(+o.plates) && +o.plates >= 1 && +o.plates <= 6 ? +o.plates : null;
+    o.cut = r.hasCut && o.cut === 'thigh' ? 'thigh' : 'breast';
     o.carb = r.hasCarbChoice ? (['rice','potato'].includes(o.carb) ? o.carb : (S.prefs.carb === 'potato' ? 'potato' : 'rice')) : 'rice';
     if (!['fresh','ready'].includes(o.rice)) o.rice = S.prefs.trackInventory && ['in','low'].includes(S.inv.p_rice) ? 'ready' : 'fresh';
     if (r.hasSauceChoice && !['regular','smoky','spicy'].includes(o.sauce)) o.sauce = S.prefs.heat === 'mild' ? 'regular' : 'spicy';
@@ -226,14 +232,28 @@ function build(r, overrides) {
   const c = Object.assign({}, o, { r, heat: S.prefs.heat, ings: [] });
   const push = (ing, scale, extra) => c.ings.push(Object.assign({}, ing, { sq: ing.q * scale, sg: ing.g * scale, key: ing.key || ing.id, extra }));
   if (r.type === 'dinner') {
-    c.n = c.pieces = o.servings;
     const pf = portionFactor();
-    for (const ing of r.ingredients) {
-      if (!cond(ing.if, c)) continue;
-      push(ing, o.servings * (ing.role === 'protein' ? pf.protein : ing.role === 'carb' ? pf.carb : 1));
+    // Planning code passes explicit servings; "I have…" only applies on the recipe itself.
+    if (overrides && overrides.servings != null && overrides.mode == null) c.mode = 'servings';
+    const prot = r.ingredients.find(i => i.role === 'protein');
+    let scaleN = o.servings;
+    if (c.mode === 'amount') {
+      scaleN = c.amountOz / (prot.q * pf.protein);         // standard servings' worth of everything
+      c.plates = c.plates || clamp(Math.round(scaleN), 1, 6);
+    } else {
+      c.plates = o.servings;
     }
-    (r.heat[S.prefs.heat] || []).forEach(ing => push(ing, o.servings, 'Heat'));
-    tierAdds(r, o.tier).forEach(([ing, label]) => push(ing, o.servings, label));
+    c.scaleN = scaleN;
+    c.n = c.pieces = c.plates;
+    for (let ing of r.ingredients) {
+      if (!cond(ing.if, c)) continue;
+      if (ing.id === 'chicken' && c.cut === 'thigh') {
+        ing = Object.assign({}, ing, { id:'thighs', key:'chicken', name:'Chicken thighs', any:['thighs','p_chicken'], note:'raw, boneless skinless · about 8 oz cooked', sub:'Chicken breast works too: switch Chicken to Breast.' });
+      }
+      push(ing, scaleN * (ing.role === 'protein' ? pf.protein : ing.role === 'carb' ? pf.carb : 1));
+    }
+    (r.heat[S.prefs.heat] || []).forEach(ing => push(ing, scaleN, 'Heat'));
+    tierAdds(r, o.tier).forEach(([ing, label]) => push(ing, c.plates, label));
   } else {
     const y = r.yields.find(y => y.id === o.yield) || r.yields[0];
     c.y = y; c.n = c.pieces = y.pieces;
@@ -254,6 +274,13 @@ function build(r, overrides) {
   return c;
 }
 
+// "2 servings" or "1 lb chicken thighs · 2 plates"
+function amountLabel(c) {
+  if (c.r.type !== 'dinner') return '';
+  if (c.mode !== 'amount') return c.n + ' ' + (c.n > 1 ? 'servings' : 'serving');
+  const p = c.ings.find(i => i.role === 'protein');
+  return fmtQ(c.amountOz, 'oz') + ' ' + lcName(p) + ' · ' + c.plates + ' ' + (c.plates > 1 ? 'plates' : 'plate');
+}
 function bakeMin(c) { return c.y ? (c.y.bakeMin || 0) + ((c.v && c.v.bakeExtra) || 0) : 0; }
 
 /* ---------- Nutrition (per serving / per piece) ---------- */
@@ -320,14 +347,15 @@ function fill(text, c) {
 
 /* ---------- Steps & timeline ---------- */
 function stepsFor(c) {
-  const bigBatch = c.r.type === 'dinner' && c.n >= 3;
+  const bigBatch = c.r.type === 'dinner' && (c.scaleN || c.n) >= 3;
   return c.r.steps.filter(s => cond(s.if, c)).map(s => {
     const st = Object.assign({}, s);
     if (bigBatch && (s.key === 'beef' || s.key === 'chicken')) {
       st.passive = (s.passive || 0) + 4;
       st.timer = (s.timer || 0) + 4;
-      st.batch = 'Cooking ' + c.n + ' servings: use your largest pan, or cook in two batches so it browns instead of steaming. Allow about 4 extra minutes.';
+      st.batch = 'Big batch: use your largest pan, or cook in two batches so it browns instead of steaming. Allow about 4 extra minutes.';
     }
+    if (c.cut === 'thigh' && st.safety === CHICKEN_SAFETY) st.safety = THIGH_SAFETY;
     if (st.passive === 'bake') st.passive = bakeMin(c);
     if (st.timer === 'bake') st.timer = bakeMin(c);
     if (c.r.id === 'donuts' && st.key === 'bake' && c.y && c.y.id === 'twelve') st.batch = 'One pan at a time? Bake the second pan right after the first; wipe and re-grease it first.';

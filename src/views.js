@@ -190,7 +190,7 @@ function viewTonight() {
     <div class="hero-top">
       ${bowlSVG(r, 92, c.carb)}
       <div class="hero-title">
-        <p class="kicker">${esc(r.difficulty)} · ${c.n} ${c.n > 1 ? 'servings' : 'serving'}${isFav(r.id) ? ' · <span class="fav-mark">Favorite</span>' : ''}</p>
+        <p class="kicker">${esc(r.difficulty)} · ${esc(amountLabel(c))}${isFav(r.id) ? ' · <span class="fav-mark">Favorite</span>' : ''}</p>
         <h2 id="hero-name" class="hero-name"><a href="#/meal/${r.id}">${esc(r.name)}</a></h2>
         ${rl.text ? `<p class="ready-line ${rl.cls}">${esc(rl.text)}</p>` : ''}
       </div>
@@ -286,8 +286,20 @@ function viewMeal(id) {
   const TABS = [['ingredients','Ingredients'],['steps','Steps'],['extras','Extras'],['leftovers','Leftovers']];
   const tab = recipeTab(id, TABS);
 
+  const protName = r.protein === 'beef' ? 'ground beef' : o.cut === 'thigh' ? 'chicken thighs' : 'chicken breast';
+  const dispAmt = o.amountUnit === 'lb' ? String(Math.round(o.amountOz / 16 * 100) / 100) : String(Math.round(o.amountOz * 10) / 10);
+  const amountBox = o.mode !== 'amount' ? '' : `<div class="amount-box">
+      <label class="opt-label" for="amount-${id}">How much ${protName} do you have?</label>
+      <div class="amount-row"><input id="amount-${id}" class="amount-input mono" type="number" inputmode="decimal" min="0" step="any" value="${dispAmt}" data-a="amount-num" data-rid="${id}">
+        ${seg('Unit', [['lb','lb'],['oz','oz']], o.amountUnit, 'opt', `data-rid="${id}" data-k="amountUnit"`)}</div>
+      <div class="chips">${[[8,'½ lb'],[16,'1 lb'],[24,'1½ lb'],[32,'2 lb']].map(([oz, l]) => `<button type="button" class="chip" aria-pressed="${Math.abs(o.amountOz - oz) < 0.01}" data-a="amount-preset" data-rid="${id}" data-v="${oz}">${l}</button>`).join('')}</div>
+      <span class="opt-label">Split into</span>
+      ${seg('Plates', [[1,'1 plate'],[2,'2'],[3,'3'],[4,'4']], c.plates, 'opt', `data-rid="${id}" data-k="plates"`)}
+      <p class="fine">About ${fmtNum(c.scaleN, [0, 0.25, 0.5, 0.75, 1])} standard ${c.scaleN > 1.12 ? 'servings' : 'serving'} of everything. Every ingredient below is scaled to your ${fmtQ(o.amountOz, 'oz')}.</p>
+    </div>`;
   const visibleOpts = [
-    `<div class="opt"><span class="opt-label">Servings</span>${seg('Servings', [[1,'1'],[2,'2'],[4,'4'],[6,'6']], o.servings, 'opt', `data-rid="${id}" data-k="servings"`)}</div>`,
+    `<div class="opt"><span class="opt-label">Servings</span>${seg('Servings', [[1,'1'],[2,'2'],[4,'4'],[6,'6'],['amount','I have…']], o.mode === 'amount' ? 'amount' : o.servings, 'opt', `data-rid="${id}" data-k="servings"`)}${amountBox}</div>`,
+    r.hasCut ? `<div class="opt"><span class="opt-label">Chicken</span>${seg('Chicken', [['breast','Breast'],['thigh','Thighs']], o.cut, 'opt', `data-rid="${id}" data-k="cut"`)}</div>` : '',
     r.hasCarbChoice ? `<div class="opt"><span class="opt-label">Carb</span>${seg('Carb', [['rice','Rice'],['potato','Potatoes']], o.carb, 'opt', `data-rid="${id}" data-k="carb"`)}</div>` : '',
     r.hasSauceChoice ? `<div class="opt"><span class="opt-label">BBQ sauce</span>${seg('BBQ sauce', [['regular','Regular'],['smoky','Smoky'],['spicy','Spicy']], o.sauce, 'opt', `data-rid="${id}" data-k="sauce"`)}</div>` : '',
   ].join('');
@@ -320,7 +332,7 @@ function viewMeal(id) {
   <header class="rhead">
     <div class="rhead-top">${bowlSVG(r, 72, c.carb)}<div class="rhead-title"><h1 class="h1">${esc(r.name)}</h1></div>${favBtn(r.id, r.name)}</div>
     ${macroRow(nu, tm.total)}
-    <p class="fine">Per serving, approximate${o.tier !== 'base' ? ', with ' + o.tier + ' toppings' : ''}.</p>
+    <p class="fine">${o.mode === 'amount' ? 'Per plate (' + esc(amountLabel(c)) + ')' : 'Per serving'}, approximate${o.tier !== 'base' ? ', with ' + o.tier + ' toppings' : ''}.</p>
   </header>
   <div class="opts">${visibleOpts}</div>
   ${moreOpts}
