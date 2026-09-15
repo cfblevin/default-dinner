@@ -12,9 +12,10 @@ const NUT_KEYS = ['kcal','protein','carbs','fat','fiber','sodium','potassium','c
 const NUT = {
   beef:        [152,20.9,0,7,0,66,336,12,2.3,0,0,0.1,21],       // 93/7 raw
   chicken:     [120,22.5,0,2.6,0,45,334,5,0.4,9,0,0.1,28],      // breast raw
-  thighs:      [121,19.7,0,4.1,0,95,222,7,0.8,17,0,0.1,23],     // boneless skinless thigh raw
+  thighs:      [135,19,0,6.5,0,90,230,8,0.9,15,0,0.1,22],        // boneless skinless thigh raw (typical retail)
   p_beef:      [200,27.5,0,9.5,0,85,420,15,3,0,0,0.1,26],       // cooked
-  p_chicken:   [165,31,0,3.6,0,74,256,15,1,9,0,0.1,29],         // cooked
+  p_chicken:   [165,31,0,3.6,0,74,256,15,1,9,0,0.1,29],         // cooked breast
+  p_thighs:    [185,24,0,9.5,0,105,240,10,1.2,18,0,0.1,24],     // cooked thigh
   yogurt:      [73,10,3.9,1.9,0,34,141,115,0.1,20,0,0,11],      // 2% Greek
   eggs:        [143,12.6,0.7,9.5,0,142,138,56,1.8,160,0,2,12],
   protein:     [400,78,10,5,1,300,500,450,1,0,0,0,60],          // whey, generic

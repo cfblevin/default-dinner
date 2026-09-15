@@ -684,12 +684,12 @@ function viewNoCook() {
   const showAll = !ready.length;
   const list = showAll ? all.sort((a, b) => ({ ready:0, almost:1, no:2 }[a.rd.level] - { ready:0, almost:1, no:2 }[b.rd.level]) || a.q.time - b.q.time) : ready;
   const quickHTML = `<ul class="heat">${list.map(({ q, rd }) => {
-    const c = { ings: q.ing.filter(i => !i.opt || avail(i).st !== 'out').map(i => Object.assign({}, i, { sq:i.q, sg:i.g })), pieces:1 };
+    const c = quickContext(q);
     const nu = nutrition(c);
     const status = showAll && S.prefs.trackInventory ? `<span class="ready-line ${rd.level === 'almost' ? 'warn' : 'bad'}">Need ${esc(rd.missing.map(lcName).join(', '))}</span>` : '';
     return `<li><details class="heat-item" data-d="quick-${q.id}"><summary><span class="make-time mono">${q.time}m</span><span class="heat-body"><span class="task-title">${esc(q.name)}</span><span class="meta">~${roundKcal(nu.kcal)} kcal · ${roundG(nu.protein)} g protein</span>${status}</span>${ICON.chev}</summary>
       <div class="heat-detail">${q.note ? `<p class="muted">${esc(q.note)}</p>` : ''}
-        <ul class="ings plain">${q.ing.map(i => { const a = avail(i); return `<li class="ing"><span></span><span class="ing-label"><span class="ing-name">${esc(i.name || itemName(i.id))}${i.opt ? ' <span class="tag">optional</span>' : ''}</span>${stockBadge(a.st, a.via, (i.any || [i.id])[0])}</span><span class="ing-amt mono">${esc(fmtQ(i.q, i.u))}</span></li>`; }).join('')}</ul>
+        <ul class="ings plain">${quickIngs(q).map(i => { const a = avail(i); return `<li class="ing"><span></span><span class="ing-label"><span class="ing-name">${esc(i.name || itemName(i.id))}${i.opt ? ' <span class="tag">optional</span>' : ''}</span>${stockBadge(a.st, a.via, (i.any || [i.id])[0])}</span><span class="ing-amt mono">${esc(fmtQ(i.q, i.u))}</span></li>`; }).join('')}</ul>
         <h3 class="h3">Assembly</h3><ol class="bullets num">${q.steps.map(s => `<li>${esc(s)}</li>`).join('')}</ol>
         <button type="button" class="btn primary wide" data-a="quick-log" data-id="${q.id}">I made this</button></div></details></li>`;
   }).join('')}</ul>`;
@@ -732,6 +732,7 @@ function viewSettings() {
   <div class="set-group">
     ${row('Portion size', seg('Portion size', [['standard','Standard · 8 oz protein'],['large','Hungry · 10 oz']], p.portion, 'pref', 'data-k="portion"'))}
     ${row('Preferred protein', seg('Preferred protein', [['any','Either'],['chicken','Chicken'],['beef','Beef']], p.protein, 'pref', 'data-k="protein"'))}
+    ${row('Chicken', seg('Chicken', [['breast','Breast'],['thigh','Thighs']], chickenCut(), 'pref', 'data-k="chickenCut"'))}
     ${row('Heat', seg('Heat', [['mild','Mild'],['medium','Medium'],['hot','Hot']], p.heat, 'pref', 'data-k="heat"'))}
     ${row('Appearance', seg('Appearance', [['system','System'],['light','Light'],['dark','Dark']], p.theme, 'pref', 'data-k="theme"'))}
   </div>

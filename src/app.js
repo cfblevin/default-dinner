@@ -456,6 +456,7 @@ const ACT = {
     const k = el.dataset.k, v = el.dataset.v;
     S.prefs[k] = v;
     if (k === 'carb' && S.opts.bbq) delete S.opts.bbq.carb;
+    if (k === 'chickenCut') DINNERS.filter(r => r.hasCut && S.opts[r.id]).forEach(r => { delete S.opts[r.id].cut; });
     if (k === 'heat' && S.opts.bbq) delete S.opts.bbq.sauce;
     if (k === 'defaultMeal') { S.lastMeal = null; if (!S.prefs.autoRecommend) S.tonight = null; }
     if (['protein','carb','defaultMeal'].includes(k) && S.tonight && S.tonight.auto) S.tonight = null;
@@ -567,7 +568,7 @@ const ACT = {
   'quick-log'(el) {
     const q = QUICK.find(x => x.id === el.dataset.id);
     if (!q) return;
-    const c = { ings: q.ing.filter(i => !i.opt || avail(i).st !== 'out').map(i => Object.assign({}, i, { sq:i.q, sg:i.g })), pieces:1 };
+    const c = quickContext(q);
     const nu = nutrition(c);
     const veg = sum(c.ings.filter(i => ['broccoli','corn','blackbeans','cucumber','tomato','spinach','lettuce','berries'].includes(i.id) && i.u === 'cup').map(i => i.q));
     logHistory('quick', q.id, { name:q.name, protein:nu.protein, veg });
