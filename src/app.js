@@ -440,7 +440,14 @@ const ACT = {
   },
   'inv-search-clear'() { S.ui.invSearch = ''; save(); render(); const el = $('#inv-search'); if (el) el.focus(); },
   'confirm-alt'() { const fn = SHEET && SHEET.onAlt; SHEET = null; renderSheet(); if (fn) fn(); },
-  'week-step'(el) { setWeekCount(el.dataset.id, (weekCounts()[el.dataset.id] || 0) + (+el.dataset.d)); render(); },
+  'week-step'(el) {
+    const id = el.dataset.id;
+    const next = (weekCounts()[id] || 0) + (+el.dataset.d);
+    if (next > 7) { toast('Seven of one dinner is plenty for a week'); return; }
+    if (sum(Object.values(weekCounts())) + (+el.dataset.d) > 14) { toast('14 dinners is the most that stays safe to store'); return; }
+    setWeekCount(id, next);
+    render();
+  },
   'week-clear'() { S.weekPlan = { start: weekStart(), counts:{} }; save(); render(); },
   'have-step'(el) {
     const r = RECIPE[el.dataset.rid];
@@ -505,19 +512,7 @@ const ACT = {
     render();
     toast(n ? `Added ${n} ${n > 1 ? 'items' : 'item'} to your shopping list` : 'You have everything for this one');
   },
-  'prep-days'(el) { const v = el.dataset.v; const cur = prepCount(); S.prep.days = v === 'custom' ? 'custom' : +v; if (v === 'custom') S.prep.custom = cur; else S.prep.split = null; save(); render(); },
-  'prep-custom'(el) { S.prep.custom = clamp(prepCount() + (+el.dataset.d), 1, 14); S.prep.days = 'custom'; S.prep.split = null; save(); render(); },
-  split(el) {
-    const sp = Object.assign({}, prepSplit());
-    sp[el.dataset.id] = Math.max(0, sp[el.dataset.id] + (+el.dataset.d));
-    const total = sum(Object.values(sp));
-    if (total < 1) { toast('Keep at least one dinner in the plan'); return; }
-    if (total > 14) { toast('14 dinners is the most that stays safe to store'); return; }
-    S.prep.split = sp;
-    S.prep.days = [2, 4, 7].includes(total) ? total : 'custom';
-    S.prep.custom = total;
-    save(); render();
-  },
+  'plan-four'() { setWeekCounts(autoSplit(4)); render(); toast('Planned four dinners for this week'); },
   'prep-missing'() { const agg = aggregate(planBuilds(prepSplit())); const n = addMissingToList(Object.values(agg)); render(); toast(n ? `Added ${n} items to your shopping list` : 'You have everything for this plan'); },
   'prep-reset'() { S.prep.done = {}; save(); render(); },
   comp(el) {

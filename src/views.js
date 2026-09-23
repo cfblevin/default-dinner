@@ -471,14 +471,15 @@ function viewPrep(tab) {
   return `${backLink('#/settings', 'Settings')}<header class="page-head"><h1 class="h1">Meal prep</h1></header>${nav}${body}`;
 }
 
+function weekPicker(ids) {
+  const w = weekCounts();
+  return `<ul class="split">${ids.map(r => `<li class="split-row">${bowlSVG(r, 36, getOpts(r).carb)}<span class="split-name">${esc(r.short)}${r.prepable ? '' : ' <span class="tag">cook fresh</span>'}</span>${stepper(r.short + ' this week', w[r.id] || 0, 'week-step', `data-id="${r.id}"`)}</li>`).join('')}</ul>`;
+}
 function prepDinners() {
   const n = prepCount();
   const split = prepSplit();
   const plan = prepTasks(split);
-  const d = S.prep.days;
-  const days = seg('Prep for', [[2,'2 days'],[4,'4 days'],[7,'1 week'],['custom','Custom']], d, 'prep-days');
-  const custom = d === 'custom' ? `<div class="opt"><span class="opt-label">Dinners</span>${stepper('dinners', n, 'prep-custom', '')}</div>` : '';
-  const splitRows = DINNERS.map(r => `<li class="split-row">${bowlSVG(r, 36, getOpts(r).carb)}<span class="split-name">${esc(r.short)}</span>${stepper(r.short + ' portions', split[r.id], 'split', `data-id="${r.id}"`)}</li>`).join('');
+  const extras = weekExtras();
   const hands = sum(plan.tasks.map(t => t.hands || 0));
   // Quantities grouped by role.
   const groups = [['protein','Protein'],['carb','Carbs'],['veg','Vegetables'],['flavor','Sauces & seasoning']];
@@ -501,12 +502,14 @@ function prepDinners() {
   const tasks = `<p class="progress-line"><span class="mono">${done} of ${plan.tasks.length}</span> done${done ? ` · <button type="button" class="text-btn" data-a="prep-reset">Reset</button>` : ''}</p>
     <ol class="tasks">${plan.sch.items.map(({ s, t }) => checkTask(s, t, S.prep.done, 'prep-done')).join('')}</ol>`;
   return `
-  ${section('What are you prepping for?', days + custom + `<p class="summary"><strong>${n} ${n > 1 ? 'dinners' : 'dinner'}</strong> · about ${fmtDur(plan.sch.total)} start to finish · ${hands} min hands-on</p>`)}
-  ${section('Which dinners', `<ul class="split">${splitRows}</ul><p class="fine">Changing these updates every quantity below.</p>`)}
-  ${section('What you need', qty + (S.prefs.trackInventory ? `<div class="btn-row"><button type="button" class="btn small" data-a="prep-missing">Add missing to shopping list</button></div>` : ''))}
-  ${n > FRIDGE_SLOTS ? `<p class="callout safe"><strong>Food safety</strong> Cooked meals keep 3–4 days in the fridge. Containers ${FRIDGE_SLOTS + 1} and up go straight into the freezer; move one to the fridge the night before.</p>` : ''}
-  ${section('Prep timeline', tasks)}
-  <a class="btn wide" href="#/prep/portion">Portion your meals ${ICON.chev}</a>`;
+  ${section('This week’s dinners', weekPicker(DINNERS) + `<p class="fine">One list for everything: it drives this plan, the shopping list and tonight’s suggestion. Resets every Monday.</p>`
+    + (n ? `<p class="summary"><strong>${n} ${n > 1 ? 'dinners' : 'dinner'}</strong> batch-cooked here · about ${fmtDur(plan.sch.total)} start to finish · ${hands} min hands-on</p>` : '')
+    + (extras.length ? `<p class="fine">${extras.map(r => esc(r.short)).join(' and ')} ${extras.length > 1 ? 'are' : 'is'} best cooked fresh, so ${extras.length > 1 ? 'they’re' : 'it’s'} not in the batch plan — the shopping list still covers ${extras.length > 1 ? 'them' : 'it'}.</p>` : ''))}
+  ${!n ? emptyState('Nothing planned to batch-cook yet.', 'Add a couple of dinners above, or start from a standard week.', '<button type="button" class="btn primary" data-a="plan-four">Plan 4 dinners</button>') : ''}
+  ${!n ? '' : section('What you need', qty + (S.prefs.trackInventory ? `<div class="btn-row"><button type="button" class="btn small" data-a="prep-missing">Add missing to shopping list</button></div>` : ''))}
+  ${!n ? '' : n > FRIDGE_SLOTS ? `<p class="callout safe"><strong>Food safety</strong> Cooked meals keep 3–4 days in the fridge. Containers ${FRIDGE_SLOTS + 1} and up go straight into the freezer; move one to the fridge the night before.</p>` : ''}
+  ${!n ? '' : section('Prep timeline', tasks)}
+  ${!n ? '' : `<a class="btn wide" href="#/prep/portion">Portion your meals ${ICON.chev}</a>`}`;
 }
 
 function prepComponents() {
@@ -582,7 +585,7 @@ function prepPortion() {
       <span class="stored-actions">${st === 'frozen' ? `<button type="button" class="btn small" data-a="thaw" data-id="${ct.uid}">Thaw</button>` : st === 'good' ? `<button type="button" class="btn small" data-a="eat" data-id="${ct.uid}">Ate it</button>` : ''}<button type="button" class="text-btn" data-a="discard" data-id="${ct.uid}">Remove</button></span></li>`;
   }).join('')}</ul>` : emptyState('Nothing prepped yet.', `Prep four dinners in about ${fmtDur(prepTasks(autoSplit(4)).sch.total)}.`, '<button type="button" class="btn primary" data-a="start-prep">Start prep</button>');
   return `
-  ${section('Portion your meals', `<p class="muted">${plan.length} containers from your prep plan, alternated so you don’t eat the same bowl twice in a row.</p><ol class="tasks">${packable}</ol>
+  ${!plan.length ? emptyState('Nothing planned to portion.', 'Plan some dinners first and the packing list builds itself.', '<a class="btn" href="#/prep/dinners">Plan dinners</a>') : section('Portion your meals', `<p class="muted">${plan.length} containers from your prep plan, alternated so you don’t eat the same bowl twice in a row.</p><ol class="tasks">${packable}</ol>
     <button type="button" class="btn primary wide" data-a="pack-save" ${packedCount ? '' : 'disabled'}>${packedCount ? 'Save ' + packedCount + ' packed ' + (packedCount > 1 ? 'containers' : 'container') : 'Check off containers as you pack them'}</button>`)}
   ${section('In your fridge and freezer', stored)}`;
 }
@@ -667,7 +670,7 @@ function invShopping() {
   ];
   const basedOn = srcList.filter(([k]) => S.shopSources[k] && !(k === 'week' && !weekTotal) && !(k === 'tonight' && S.shopSources.week && weekTotal)).map(([, l]) => l.split(/[:(]/)[0].trim().toLowerCase()).join(', ') || 'nothing selected';
   const weekHTML = `<details class="week-plan" data-d="week-plan"${weekTotal ? ' open' : ''}><summary><span class="week-title">This week’s dinners</span><span class="week-count">${weekTotal ? weekTotal + ' planned' : 'Plan ahead'}</span></summary>
-    <ul class="split">${DINNERS.map(r => `<li class="split-row">${bowlSVG(r, 32, getOpts(r).carb)}<span class="split-name">${esc(r.short)}</span>${stepper(r.short + ' this week', week[r.id] || 0, 'week-step', `data-id="${r.id}"`)}</li>`).join('')}</ul>
+    ${weekPicker(DINNERS)}
     <p class="fine">Each one is a standard serving. The list covers these instead of just tonight. Resets every Monday.${weekTotal ? ` <button type="button" class="text-btn inline" data-a="week-clear">Clear</button>` : ''}</p>
     ${!weekTotal && sum(Object.values(lastWeekCounts())) ? `<button type="button" class="btn small" data-a="week-same">Same as last week (${sum(Object.values(lastWeekCounts()))} dinners)</button>` : ''}</details>`;
   const sources = `<details class="more" data-d="shop-sources"><summary>Based on ${esc(basedOn)}</summary><ul class="checks">${srcList.map(([k, l]) =>
@@ -736,7 +739,9 @@ function viewNoCook() {
   <header class="page-head"><h1 class="h1">Five-minute mode</h1></header>
   ${good.length ? section('Ready to heat', readyHTML) : ''}
   ${frozen.length ? `<p class="callout"><strong>${frozen.length} in the freezer.</strong> Move one to the fridge tonight for tomorrow. <a href="#/prep/portion">Manage</a></p>` : ''}
-  ${section(showAll ? 'Closest options' : 'Assemble something', (showAll && !good.length ? '<p class="muted">Nothing is fully ready with what’s marked in your kitchen. These need the fewest things.</p>' : '') + quickHTML)}
+  ${section(showAll ? 'Closest options' : 'Assemble something', (showAll ? (good.length
+      ? '<p class="muted">Nothing here is fully ready from the kitchen list — but you already have food in the fridge above.</p>'
+      : '<p class="muted">Nothing is fully ready with what’s marked in your kitchen. These need the fewest things.</p>') : '') + quickHTML)}
   <div class="sec order-out"><p class="muted">Not tonight?</p><button type="button" class="btn wide" data-a="order-out">Ordering tonight</button><p class="fine">Logs it and moves on. No judgment — knowing how often it happens is the useful part.</p></div>`;
 }
 

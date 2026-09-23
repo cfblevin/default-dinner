@@ -725,7 +725,7 @@ const RECIPES = [
 {
   id:'chili', type:'dinner', name:'Beef Chili', short:'Chili',
   flavor:'A pot of beef, beans and tomatoes that gets better for days and freezes perfectly. Your takeout insurance.',
-  difficulty:'Easy', protein:'beef', defaultServings:4, carbs:['none','rice','hash'], defaultCarb:'none', tags:['batch','freezer','better on day two'],
+  difficulty:'Easy', protein:'beef', prepable:true, defaultServings:4, carbs:['none','rice','hash'], defaultCarb:'none', tags:['batch','freezer','better on day two'],
   bowl:[['chili',0.72],['corn',0.28]], garnish:'yogurt',
   ingredients:[
     { id:'beef', q:6, u:'oz', g:170, role:'protein', core:true, any:['beef','p_beef'], note:'raw · about {cooked} cooked' },

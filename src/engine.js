@@ -734,6 +734,7 @@ const PACK_SEPARATE = {
   mexican:'lettuce, salsa and salsa-yogurt sauce',
   med:'cucumber, tomato, spinach and garlic yogurt sauce',
   bbq:'pickles, green onion and extra sauce',
+  chili:'yogurt, cheese and green onion',
 };
 const COOKED_YIELD = { beef:0.8, chicken:0.727, thighs:0.7 };
 function containerContents(r) {
@@ -742,13 +743,17 @@ function containerContents(r) {
   c.ings.forEach(i => {
     if (i.role === 'protein') parts.push(fmtQ(i.sq * (COOKED_YIELD[i.id] || 1), 'oz') + ' cooked ' + (i.id === 'beef' ? 'beef' : 'chicken'));
     else if (i.role === 'carb') parts.push(i.id === 'potatoes' ? fmtQ(i.sq * 0.8, 'oz') + ' roasted potatoes' : fmtQ(i.sq, i.u) + ' rice');
-    else if (i.role === 'veg' && ['broccoli','corn','blackbeans'].includes(i.id)) parts.push(fmtQ(i.sq, i.u) + ' ' + lcName(i));
+    else if (i.role === 'veg' && ['broccoli','corn','blackbeans','tomatoes','peppers'].includes(i.id)) parts.push(fmtQ(i.sq, i.u) + ' ' + lcName(i));
   });
   return parts.join(' · ');
 }
 
 /* ---------- Prep plan ---------- */
-function prepCount() { const d = S.prep.days; return d === 'custom' ? clamp(+S.prep.custom || 1, 1, 14) : clamp(+d || 4, 1, 14); }
+// The week plan is the single source: what you plan to eat drives the shopping
+// list, the batch-cooking plan and tonight's suggestion.
+function prepCount() { return sum(Object.values(prepSplit())); }
+function weekTotal() { return sum(Object.values(weekCounts())); }
+function weekExtras() { return DINNERS.filter(r => !r.prepable && (weekCounts()[r.id] || 0) > 0); }
 const PREP_DINNERS = () => DINNERS.filter(r => r.prepable);
 function autoSplit(n) {
   const order = [...PREP_DINNERS()].sort((a, b) => (isFav(b.id) ? 1 : 0) - (isFav(a.id) ? 1 : 0));
@@ -757,10 +762,10 @@ function autoSplit(n) {
   return sp;
 }
 function prepSplit() {
-  const n = prepCount();
-  const sp = S.prep.split;
-  if (isObj(sp) && PREP_DINNERS().every(r => Number.isInteger(sp[r.id]) && sp[r.id] >= 0) && sum(PREP_DINNERS().map(r => sp[r.id])) === n) return sp;
-  return autoSplit(n);
+  const w = weekCounts();
+  const sp = {};
+  PREP_DINNERS().forEach(r => { sp[r.id] = clamp(+w[r.id] || 0, 0, 7); });
+  return sp;
 }
 function planBuilds(split) {
   return PREP_DINNERS().filter(r => split[r.id] > 0).map(r => build(r, { servings: split[r.id], tier:'base', rice:'fresh' }));
@@ -809,11 +814,12 @@ function prepTasks(split) {
   const pf = portionFactor();
   const riceServ = (k + x + m + (potato ? 0 : b));
   const dryCups = riceServ * 0.5 * pf.carb;
-  const chickenOz = (x + m) * 11 * pf.protein, beefOz = (k + b) * 10 * pf.protein;
+  const chickenOz = (x + m) * 11 * pf.protein, beefOz = (k + b) * 10 * pf.protein; // chili beef cooks in its own pot
   const beefBatches = Math.max(1, Math.ceil(beefOz / 32));
   const broccoliCups = k * 1.5 + b;
-  const n = k + x + m + b;
+  const n = sum(Object.values(split));
   const T = [];
+  const ch = (split.chili || 0) ? build(RECIPE.chili, { servings: split.chili, tier:'base', carb:'none' }) : null;
   const kb = k ? build(RECIPE.korean, { servings:k }) : null;
   const bb = b ? build(RECIPE.bbq, { servings:b, tier:'base' }) : null;
   const xb = x ? build(RECIPE.mexican, { servings:x, tier:'base' }) : null;
@@ -837,6 +843,9 @@ function prepTasks(split) {
     text:'Potatoes on their own pan in a single layer: 25–30 minutes, flipping halfway, until golden.' });
   if (chickenOz) T.push({ id:'roast', key:'roast', waitFor:'oven', after:'season', title:'Chicken into the oven', hands:2, passive: anyThigh ? 23 : 20,
     text:'Spread the chicken in a single layer' + (x && m ? ' — Mexican on one pan, Mediterranean on the other' : '') + '. ' + (allThigh ? 'Roast 22–25 minutes, to about 175°F.' : anyThigh ? 'Roast breast 18–22 minutes (165°F) and thighs 22–25 minutes (about 175°F).' : 'Roast 18–22 minutes, to 165°F.') });
+  if (ch) T.push({ id:'chili', key:'chili', title:'Get the chili going', hands:9, passive:25,
+    text:fill('Brown {q:beef} beef with {q:peppers} diced peppers and onion in a pot, stir in {q:chilipowder} chili powder, {q:cumin} cumin, {q:smokedpaprika} smoked paprika and {q:garlicpowder} garlic powder for 30 seconds, then add {q:tomatoes} canned tomatoes, {q:blackbeans} rinsed black beans and {q:corn} corn. Simmer 20–25 minutes while everything else cooks.', ch),
+    safety:BEEF_SAFETY });
   if (beefOz) T.push({ id:'beef', key:'beef', title:'Brown the ground beef', hands:2 * beefBatches, passive:9 * beefBatches,
     text:'Brown ' + fmtQ(beefOz, 'oz') + ' beef in your largest skillet' + (beefBatches > 1 ? ', in ' + beefBatches + ' batches (about 2 lb each)' : '') + '. Press flat, leave 2 minutes, then crumble and cook until no pink remains, 8–10 minutes. Spoon off pooled fat.' , safety:BEEF_SAFETY });
   if (broccoliCups) T.push({ id:'broc', key:'broc', title:'Steam the broccoli', hands:2, passive:Math.ceil(broccoliCups / 3) * 3,
@@ -870,7 +879,8 @@ function packingPlan(split) {
   const order = [];
   const counts = Object.assign({}, split);
   const bbqPotato = getOpts(RECIPE.bbq).carb === 'potato';
-  const seq = bbqPotato ? ['bbq','korean','mexican','med'] : ['korean','mexican','med','bbq'];
+  const ids = PREP_DINNERS().map(r => r.id);
+  const seq = bbqPotato ? ['bbq'].concat(ids.filter(id => id !== 'bbq')) : ids;
   let left = sum(Object.values(counts));
   while (left > 0) {
     seq.forEach(id => { if (counts[id] > 0) { order.push(id); counts[id]--; left--; } });

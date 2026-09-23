@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="app-version" content="1db8d634c917">
+<meta name="app-version" content="2bbde02d80fb">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -1353,7 +1353,7 @@ const RECIPES = [
 {
   id:'chili', type:'dinner', name:'Beef Chili', short:'Chili',
   flavor:'A pot of beef, beans and tomatoes that gets better for days and freezes perfectly. Your takeout insurance.',
-  difficulty:'Easy', protein:'beef', defaultServings:4, carbs:['none','rice','hash'], defaultCarb:'none', tags:['batch','freezer','better on day two'],
+  difficulty:'Easy', protein:'beef', prepable:true, defaultServings:4, carbs:['none','rice','hash'], defaultCarb:'none', tags:['batch','freezer','better on day two'],
   bowl:[['chili',0.72],['corn',0.28]], garnish:'yogurt',
   ingredients:[
     { id:'beef', q:6, u:'oz', g:170, role:'protein', core:true, any:['beef','p_beef'], note:'raw · about {cooked} cooked' },
@@ -2570,6 +2570,7 @@ const PACK_SEPARATE = {
   mexican:'lettuce, salsa and salsa-yogurt sauce',
   med:'cucumber, tomato, spinach and garlic yogurt sauce',
   bbq:'pickles, green onion and extra sauce',
+  chili:'yogurt, cheese and green onion',
 };
 const COOKED_YIELD = { beef:0.8, chicken:0.727, thighs:0.7 };
 function containerContents(r) {
@@ -2578,13 +2579,17 @@ function containerContents(r) {
   c.ings.forEach(i => {
     if (i.role === 'protein') parts.push(fmtQ(i.sq * (COOKED_YIELD[i.id] || 1), 'oz') + ' cooked ' + (i.id === 'beef' ? 'beef' : 'chicken'));
     else if (i.role === 'carb') parts.push(i.id === 'potatoes' ? fmtQ(i.sq * 0.8, 'oz') + ' roasted potatoes' : fmtQ(i.sq, i.u) + ' rice');
-    else if (i.role === 'veg' && ['broccoli','corn','blackbeans'].includes(i.id)) parts.push(fmtQ(i.sq, i.u) + ' ' + lcName(i));
+    else if (i.role === 'veg' && ['broccoli','corn','blackbeans','tomatoes','peppers'].includes(i.id)) parts.push(fmtQ(i.sq, i.u) + ' ' + lcName(i));
   });
   return parts.join(' · ');
 }
 
 /* ---------- Prep plan ---------- */
-function prepCount() { const d = S.prep.days; return d === 'custom' ? clamp(+S.prep.custom || 1, 1, 14) : clamp(+d || 4, 1, 14); }
+// The week plan is the single source: what you plan to eat drives the shopping
+// list, the batch-cooking plan and tonight's suggestion.
+function prepCount() { return sum(Object.values(prepSplit())); }
+function weekTotal() { return sum(Object.values(weekCounts())); }
+function weekExtras() { return DINNERS.filter(r => !r.prepable && (weekCounts()[r.id] || 0) > 0); }
 const PREP_DINNERS = () => DINNERS.filter(r => r.prepable);
 function autoSplit(n) {
   const order = [...PREP_DINNERS()].sort((a, b) => (isFav(b.id) ? 1 : 0) - (isFav(a.id) ? 1 : 0));
@@ -2593,10 +2598,10 @@ function autoSplit(n) {
   return sp;
 }
 function prepSplit() {
-  const n = prepCount();
-  const sp = S.prep.split;
-  if (isObj(sp) && PREP_DINNERS().every(r => Number.isInteger(sp[r.id]) && sp[r.id] >= 0) && sum(PREP_DINNERS().map(r => sp[r.id])) === n) return sp;
-  return autoSplit(n);
+  const w = weekCounts();
+  const sp = {};
+  PREP_DINNERS().forEach(r => { sp[r.id] = clamp(+w[r.id] || 0, 0, 7); });
+  return sp;
 }
 function planBuilds(split) {
   return PREP_DINNERS().filter(r => split[r.id] > 0).map(r => build(r, { servings: split[r.id], tier:'base', rice:'fresh' }));
@@ -2645,11 +2650,12 @@ function prepTasks(split) {
   const pf = portionFactor();
   const riceServ = (k + x + m + (potato ? 0 : b));
   const dryCups = riceServ * 0.5 * pf.carb;
-  const chickenOz = (x + m) * 11 * pf.protein, beefOz = (k + b) * 10 * pf.protein;
+  const chickenOz = (x + m) * 11 * pf.protein, beefOz = (k + b) * 10 * pf.protein; // chili beef cooks in its own pot
   const beefBatches = Math.max(1, Math.ceil(beefOz / 32));
   const broccoliCups = k * 1.5 + b;
-  const n = k + x + m + b;
+  const n = sum(Object.values(split));
   const T = [];
+  const ch = (split.chili || 0) ? build(RECIPE.chili, { servings: split.chili, tier:'base', carb:'none' }) : null;
   const kb = k ? build(RECIPE.korean, { servings:k }) : null;
   const bb = b ? build(RECIPE.bbq, { servings:b, tier:'base' }) : null;
   const xb = x ? build(RECIPE.mexican, { servings:x, tier:'base' }) : null;
@@ -2673,6 +2679,9 @@ function prepTasks(split) {
     text:'Potatoes on their own pan in a single layer: 25–30 minutes, flipping halfway, until golden.' });
   if (chickenOz) T.push({ id:'roast', key:'roast', waitFor:'oven', after:'season', title:'Chicken into the oven', hands:2, passive: anyThigh ? 23 : 20,
     text:'Spread the chicken in a single layer' + (x && m ? ' — Mexican on one pan, Mediterranean on the other' : '') + '. ' + (allThigh ? 'Roast 22–25 minutes, to about 175°F.' : anyThigh ? 'Roast breast 18–22 minutes (165°F) and thighs 22–25 minutes (about 175°F).' : 'Roast 18–22 minutes, to 165°F.') });
+  if (ch) T.push({ id:'chili', key:'chili', title:'Get the chili going', hands:9, passive:25,
+    text:fill('Brown {q:beef} beef with {q:peppers} diced peppers and onion in a pot, stir in {q:chilipowder} chili powder, {q:cumin} cumin, {q:smokedpaprika} smoked paprika and {q:garlicpowder} garlic powder for 30 seconds, then add {q:tomatoes} canned tomatoes, {q:blackbeans} rinsed black beans and {q:corn} corn. Simmer 20–25 minutes while everything else cooks.', ch),
+    safety:BEEF_SAFETY });
   if (beefOz) T.push({ id:'beef', key:'beef', title:'Brown the ground beef', hands:2 * beefBatches, passive:9 * beefBatches,
     text:'Brown ' + fmtQ(beefOz, 'oz') + ' beef in your largest skillet' + (beefBatches > 1 ? ', in ' + beefBatches + ' batches (about 2 lb each)' : '') + '. Press flat, leave 2 minutes, then crumble and cook until no pink remains, 8–10 minutes. Spoon off pooled fat.' , safety:BEEF_SAFETY });
   if (broccoliCups) T.push({ id:'broc', key:'broc', title:'Steam the broccoli', hands:2, passive:Math.ceil(broccoliCups / 3) * 3,
@@ -2706,7 +2715,8 @@ function packingPlan(split) {
   const order = [];
   const counts = Object.assign({}, split);
   const bbqPotato = getOpts(RECIPE.bbq).carb === 'potato';
-  const seq = bbqPotato ? ['bbq','korean','mexican','med'] : ['korean','mexican','med','bbq'];
+  const ids = PREP_DINNERS().map(r => r.id);
+  const seq = bbqPotato ? ['bbq'].concat(ids.filter(id => id !== 'bbq')) : ids;
   let left = sum(Object.values(counts));
   while (left > 0) {
     seq.forEach(id => { if (counts[id] > 0) { order.push(id); counts[id]--; left--; } });
@@ -3285,14 +3295,15 @@ function viewPrep(tab) {
   return `${backLink('#/settings', 'Settings')}<header class="page-head"><h1 class="h1">Meal prep</h1></header>${nav}${body}`;
 }
 
+function weekPicker(ids) {
+  const w = weekCounts();
+  return `<ul class="split">${ids.map(r => `<li class="split-row">${bowlSVG(r, 36, getOpts(r).carb)}<span class="split-name">${esc(r.short)}${r.prepable ? '' : ' <span class="tag">cook fresh</span>'}</span>${stepper(r.short + ' this week', w[r.id] || 0, 'week-step', `data-id="${r.id}"`)}</li>`).join('')}</ul>`;
+}
 function prepDinners() {
   const n = prepCount();
   const split = prepSplit();
   const plan = prepTasks(split);
-  const d = S.prep.days;
-  const days = seg('Prep for', [[2,'2 days'],[4,'4 days'],[7,'1 week'],['custom','Custom']], d, 'prep-days');
-  const custom = d === 'custom' ? `<div class="opt"><span class="opt-label">Dinners</span>${stepper('dinners', n, 'prep-custom', '')}</div>` : '';
-  const splitRows = DINNERS.map(r => `<li class="split-row">${bowlSVG(r, 36, getOpts(r).carb)}<span class="split-name">${esc(r.short)}</span>${stepper(r.short + ' portions', split[r.id], 'split', `data-id="${r.id}"`)}</li>`).join('');
+  const extras = weekExtras();
   const hands = sum(plan.tasks.map(t => t.hands || 0));
   // Quantities grouped by role.
   const groups = [['protein','Protein'],['carb','Carbs'],['veg','Vegetables'],['flavor','Sauces & seasoning']];
@@ -3315,12 +3326,14 @@ function prepDinners() {
   const tasks = `<p class="progress-line"><span class="mono">${done} of ${plan.tasks.length}</span> done${done ? ` · <button type="button" class="text-btn" data-a="prep-reset">Reset</button>` : ''}</p>
     <ol class="tasks">${plan.sch.items.map(({ s, t }) => checkTask(s, t, S.prep.done, 'prep-done')).join('')}</ol>`;
   return `
-  ${section('What are you prepping for?', days + custom + `<p class="summary"><strong>${n} ${n > 1 ? 'dinners' : 'dinner'}</strong> · about ${fmtDur(plan.sch.total)} start to finish · ${hands} min hands-on</p>`)}
-  ${section('Which dinners', `<ul class="split">${splitRows}</ul><p class="fine">Changing these updates every quantity below.</p>`)}
-  ${section('What you need', qty + (S.prefs.trackInventory ? `<div class="btn-row"><button type="button" class="btn small" data-a="prep-missing">Add missing to shopping list</button></div>` : ''))}
-  ${n > FRIDGE_SLOTS ? `<p class="callout safe"><strong>Food safety</strong> Cooked meals keep 3–4 days in the fridge. Containers ${FRIDGE_SLOTS + 1} and up go straight into the freezer; move one to the fridge the night before.</p>` : ''}
-  ${section('Prep timeline', tasks)}
-  <a class="btn wide" href="#/prep/portion">Portion your meals ${ICON.chev}</a>`;
+  ${section('This week’s dinners', weekPicker(DINNERS) + `<p class="fine">One list for everything: it drives this plan, the shopping list and tonight’s suggestion. Resets every Monday.</p>`
+    + (n ? `<p class="summary"><strong>${n} ${n > 1 ? 'dinners' : 'dinner'}</strong> batch-cooked here · about ${fmtDur(plan.sch.total)} start to finish · ${hands} min hands-on</p>` : '')
+    + (extras.length ? `<p class="fine">${extras.map(r => esc(r.short)).join(' and ')} ${extras.length > 1 ? 'are' : 'is'} best cooked fresh, so ${extras.length > 1 ? 'they’re' : 'it’s'} not in the batch plan — the shopping list still covers ${extras.length > 1 ? 'them' : 'it'}.</p>` : ''))}
+  ${!n ? emptyState('Nothing planned to batch-cook yet.', 'Add a couple of dinners above, or start from a standard week.', '<button type="button" class="btn primary" data-a="plan-four">Plan 4 dinners</button>') : ''}
+  ${!n ? '' : section('What you need', qty + (S.prefs.trackInventory ? `<div class="btn-row"><button type="button" class="btn small" data-a="prep-missing">Add missing to shopping list</button></div>` : ''))}
+  ${!n ? '' : n > FRIDGE_SLOTS ? `<p class="callout safe"><strong>Food safety</strong> Cooked meals keep 3–4 days in the fridge. Containers ${FRIDGE_SLOTS + 1} and up go straight into the freezer; move one to the fridge the night before.</p>` : ''}
+  ${!n ? '' : section('Prep timeline', tasks)}
+  ${!n ? '' : `<a class="btn wide" href="#/prep/portion">Portion your meals ${ICON.chev}</a>`}`;
 }
 
 function prepComponents() {
@@ -3396,7 +3409,7 @@ function prepPortion() {
       <span class="stored-actions">${st === 'frozen' ? `<button type="button" class="btn small" data-a="thaw" data-id="${ct.uid}">Thaw</button>` : st === 'good' ? `<button type="button" class="btn small" data-a="eat" data-id="${ct.uid}">Ate it</button>` : ''}<button type="button" class="text-btn" data-a="discard" data-id="${ct.uid}">Remove</button></span></li>`;
   }).join('')}</ul>` : emptyState('Nothing prepped yet.', `Prep four dinners in about ${fmtDur(prepTasks(autoSplit(4)).sch.total)}.`, '<button type="button" class="btn primary" data-a="start-prep">Start prep</button>');
   return `
-  ${section('Portion your meals', `<p class="muted">${plan.length} containers from your prep plan, alternated so you don’t eat the same bowl twice in a row.</p><ol class="tasks">${packable}</ol>
+  ${!plan.length ? emptyState('Nothing planned to portion.', 'Plan some dinners first and the packing list builds itself.', '<a class="btn" href="#/prep/dinners">Plan dinners</a>') : section('Portion your meals', `<p class="muted">${plan.length} containers from your prep plan, alternated so you don’t eat the same bowl twice in a row.</p><ol class="tasks">${packable}</ol>
     <button type="button" class="btn primary wide" data-a="pack-save" ${packedCount ? '' : 'disabled'}>${packedCount ? 'Save ' + packedCount + ' packed ' + (packedCount > 1 ? 'containers' : 'container') : 'Check off containers as you pack them'}</button>`)}
   ${section('In your fridge and freezer', stored)}`;
 }
@@ -3481,7 +3494,7 @@ function invShopping() {
   ];
   const basedOn = srcList.filter(([k]) => S.shopSources[k] && !(k === 'week' && !weekTotal) && !(k === 'tonight' && S.shopSources.week && weekTotal)).map(([, l]) => l.split(/[:(]/)[0].trim().toLowerCase()).join(', ') || 'nothing selected';
   const weekHTML = `<details class="week-plan" data-d="week-plan"${weekTotal ? ' open' : ''}><summary><span class="week-title">This week’s dinners</span><span class="week-count">${weekTotal ? weekTotal + ' planned' : 'Plan ahead'}</span></summary>
-    <ul class="split">${DINNERS.map(r => `<li class="split-row">${bowlSVG(r, 32, getOpts(r).carb)}<span class="split-name">${esc(r.short)}</span>${stepper(r.short + ' this week', week[r.id] || 0, 'week-step', `data-id="${r.id}"`)}</li>`).join('')}</ul>
+    ${weekPicker(DINNERS)}
     <p class="fine">Each one is a standard serving. The list covers these instead of just tonight. Resets every Monday.${weekTotal ? ` <button type="button" class="text-btn inline" data-a="week-clear">Clear</button>` : ''}</p>
     ${!weekTotal && sum(Object.values(lastWeekCounts())) ? `<button type="button" class="btn small" data-a="week-same">Same as last week (${sum(Object.values(lastWeekCounts()))} dinners)</button>` : ''}</details>`;
   const sources = `<details class="more" data-d="shop-sources"><summary>Based on ${esc(basedOn)}</summary><ul class="checks">${srcList.map(([k, l]) =>
@@ -3550,7 +3563,9 @@ function viewNoCook() {
   <header class="page-head"><h1 class="h1">Five-minute mode</h1></header>
   ${good.length ? section('Ready to heat', readyHTML) : ''}
   ${frozen.length ? `<p class="callout"><strong>${frozen.length} in the freezer.</strong> Move one to the fridge tonight for tomorrow. <a href="#/prep/portion">Manage</a></p>` : ''}
-  ${section(showAll ? 'Closest options' : 'Assemble something', (showAll && !good.length ? '<p class="muted">Nothing is fully ready with what’s marked in your kitchen. These need the fewest things.</p>' : '') + quickHTML)}
+  ${section(showAll ? 'Closest options' : 'Assemble something', (showAll ? (good.length
+      ? '<p class="muted">Nothing here is fully ready from the kitchen list — but you already have food in the fridge above.</p>'
+      : '<p class="muted">Nothing is fully ready with what’s marked in your kitchen. These need the fewest things.</p>') : '') + quickHTML)}
   <div class="sec order-out"><p class="muted">Not tonight?</p><button type="button" class="btn wide" data-a="order-out">Ordering tonight</button><p class="fine">Logs it and moves on. No judgment — knowing how often it happens is the useful part.</p></div>`;
 }
 
@@ -4057,7 +4072,14 @@ const ACT = {
   },
   'inv-search-clear'() { S.ui.invSearch = ''; save(); render(); const el = $('#inv-search'); if (el) el.focus(); },
   'confirm-alt'() { const fn = SHEET && SHEET.onAlt; SHEET = null; renderSheet(); if (fn) fn(); },
-  'week-step'(el) { setWeekCount(el.dataset.id, (weekCounts()[el.dataset.id] || 0) + (+el.dataset.d)); render(); },
+  'week-step'(el) {
+    const id = el.dataset.id;
+    const next = (weekCounts()[id] || 0) + (+el.dataset.d);
+    if (next > 7) { toast('Seven of one dinner is plenty for a week'); return; }
+    if (sum(Object.values(weekCounts())) + (+el.dataset.d) > 14) { toast('14 dinners is the most that stays safe to store'); return; }
+    setWeekCount(id, next);
+    render();
+  },
   'week-clear'() { S.weekPlan = { start: weekStart(), counts:{} }; save(); render(); },
   'have-step'(el) {
     const r = RECIPE[el.dataset.rid];
@@ -4122,19 +4144,7 @@ const ACT = {
     render();
     toast(n ? `Added ${n} ${n > 1 ? 'items' : 'item'} to your shopping list` : 'You have everything for this one');
   },
-  'prep-days'(el) { const v = el.dataset.v; const cur = prepCount(); S.prep.days = v === 'custom' ? 'custom' : +v; if (v === 'custom') S.prep.custom = cur; else S.prep.split = null; save(); render(); },
-  'prep-custom'(el) { S.prep.custom = clamp(prepCount() + (+el.dataset.d), 1, 14); S.prep.days = 'custom'; S.prep.split = null; save(); render(); },
-  split(el) {
-    const sp = Object.assign({}, prepSplit());
-    sp[el.dataset.id] = Math.max(0, sp[el.dataset.id] + (+el.dataset.d));
-    const total = sum(Object.values(sp));
-    if (total < 1) { toast('Keep at least one dinner in the plan'); return; }
-    if (total > 14) { toast('14 dinners is the most that stays safe to store'); return; }
-    S.prep.split = sp;
-    S.prep.days = [2, 4, 7].includes(total) ? total : 'custom';
-    S.prep.custom = total;
-    save(); render();
-  },
+  'plan-four'() { setWeekCounts(autoSplit(4)); render(); toast('Planned four dinners for this week'); },
   'prep-missing'() { const agg = aggregate(planBuilds(prepSplit())); const n = addMissingToList(Object.values(agg)); render(); toast(n ? `Added ${n} items to your shopping list` : 'You have everything for this plan'); },
   'prep-reset'() { S.prep.done = {}; save(); render(); },
   comp(el) {
