@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="app-version" content="ceb6e55f4ba6">
+<meta name="app-version" content="1db8d634c917">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -32,7 +32,7 @@
    Steel-cool neutrals, ink controls, enamel-cookware blue accent.
    ========================================================================= */
 :root {
-  --bg:#F2F3F0; --surface:#FFFFFF; --surface-2:#E8EAE5; --ink:#141714; --ink-2:#4B524C; --ink-3:#737A74;
+  --bg:#F2F3F0; --surface:#FFFFFF; --surface-2:#E8EAE5; --ink:#141714; --ink-2:#4B524C; --ink-3:#5C635D;
   --line:#DADED8; --line-strong:#BCC2BB;
   --accent:#2F4FA3; --accent-soft:#E2E8F6;
   --ok:#2A6A3D; --ok-soft:#E0EEE3; --warn:#855600; --warn-soft:#F5EAD3; --bad:#A1302A; --bad-soft:#F6E0DC; --on-bad:#FFFFFF;
@@ -42,6 +42,7 @@
   --f-spinach:#3D6D3A; --f-cuc:#B4D29C; --f-tomato:#CF4F39; --f-potato:#D8B068; --f-scallion:#3C7631; --f-yogurt:#FFFFFF; --f-bbq:#5A2A1C;
   --f-bread:#C98F52; --f-crust:#9A6433; --f-choc:#3A2419; --f-brownie:#4A2F24; --f-brownie-hi:#6E4938; --f-dough:#D9A866; --f-glaze:#5A3A2C;
   --f-cream:#F0E4C6; --f-cream-2:#E6B6B1; --f-cup:#2F4FA3;
+  --f-pasta:#E8CE8E; --f-sauce:#B5402C; --f-sausage:#9C5B3C; --f-egg:#EFC352; --f-hash:#D7A85A; --f-chili:#8E3B23; --f-peppers:#C6604A; --f-sesame:#F3EEDD; --f-parm:#F6F2E4;
   --shadow:0 1px 2px rgba(20,23,20,.05), 0 6px 20px rgba(20,23,20,.06);
   --font-display:'Schibsted Grotesk', ui-sans-serif, -apple-system, 'Helvetica Neue', Arial, sans-serif;
   --font-body:-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -59,6 +60,7 @@
     --btn:#ECEEEA; --on-btn:#0E100F;
     --bowl:#1E2220; --bowl-rim:#2F3430;
     --f-rice:#D7D1BF; --f-yogurt:#EDEDE8; --f-cup:#5D78C8; --f-bbq:#8A4A36; --f-bean:#5A5050; --f-choc:#1F130D;
+    --f-sauce:#C24B33; --f-chili:#A24A2E; --f-sesame:#E8E2D0; --f-parm:#EDE8D8;
     --shadow:0 1px 2px rgba(0,0,0,.4);
     color-scheme:dark;
   }
@@ -71,6 +73,7 @@
   --btn:#ECEEEA; --on-btn:#0E100F;
   --bowl:#1E2220; --bowl-rim:#2F3430;
   --f-rice:#D7D1BF; --f-yogurt:#EDEDE8; --f-cup:#5D78C8; --f-bbq:#8A4A36; --f-bean:#5A5050; --f-choc:#1F130D;
+    --f-sauce:#C24B33; --f-chili:#A24A2E; --f-sesame:#E8E2D0; --f-parm:#EDE8D8;
   --shadow:0 1px 2px rgba(0,0,0,.4);
   color-scheme:dark;
 }
@@ -206,7 +209,7 @@ details.sec > .sec-body { padding-top:8px; }
 .tag { display:inline-block; font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-2); background:var(--surface-2); border-radius:5px; padding:2px 6px; margin-left:6px; vertical-align:2px; }
 
 /* ---------- Stock ---------- */
-.stock { display:inline-flex; align-items:center; gap:5px; font-size:12.5px; font-weight:600; line-height:1.3; }
+.stock { display:inline-flex; align-items:center; gap:5px; font-size:13.5px; font-weight:600; line-height:1.3; }
 .stock i { font-style:normal; font-size:11px; }
 .stock.in { color:var(--ok); }
 .stock.low { color:var(--warn); }
@@ -579,6 +582,32 @@ body.cooking .toast { bottom:calc(110px + var(--safe-b)); }
 .cook-inv { margin-top:4px; }
 .seg button:focus-visible, .chip:focus-visible, .rtabs button:focus-visible { outline-offset:-2px; }
 
+/* ---------- Leftovers-first Tonight, timer, nudges, search ---------- */
+.hero.fridge { border-color:color-mix(in srgb, var(--ok) 40%, var(--line)); }
+.cook-instead { padding-top:18px; }
+.cook-instead .hero { box-shadow:none; }
+.cook-instead .label { margin:0 0 8px; }
+.top-actions { display:flex; align-items:center; gap:2px; }
+.timer-banner { border-color:var(--accent); }
+.timer-banner .mono { font-size:17px; margin-left:6px; }
+.timer-presets { display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; }
+.nudge { display:flex; align-items:center; gap:12px; flex-wrap:wrap; justify-content:space-between; margin-top:12px; padding:12px; border:1px dashed var(--line-strong); border-radius:12px; font-size:14.5px; color:var(--ink-2); }
+.search { display:flex; gap:8px; align-items:center; margin:10px 0 4px; }
+.search input { flex:1; min-width:0; min-height:46px; border:1px solid var(--line-strong); border-radius:10px; padding:0 12px; background:var(--surface); color:var(--ink); font:16px var(--font-body); }
+.swap > summary { list-style:none; cursor:pointer; }
+.swap > summary::-webkit-details-marker { display:none; }
+.swap .stock.out { text-decoration:underline; text-underline-offset:3px; }
+.swap-text { font-size:13.5px; color:var(--ink-2); margin-top:4px; max-width:34em; }
+.ing-stock { grid-column:2; }
+.ings li.ing > .swap { grid-column:2; }
+.order-out { text-align:center; }
+.order-out .btn { margin-top:8px; }
+.cook-controls .span2 { grid-column:span 2; }
+.toast-act { background:none; border:0; color:var(--on-btn); font-weight:700; text-decoration:underline; padding:0 0 0 10px; }
+.shop li { min-height:48px; align-items:center; }
+.shop label { padding-block:6px; }
+.inv-cats .label { margin-top:26px; }
+
 </style>
 <a class="skip" href="#view">Skip to content</a>
 <p id="storage-warn" class="storage-warn" hidden>Saving isn’t available in this browser. Changes last until you close the page.</p>
@@ -587,8 +616,8 @@ body.cooking .toast { bottom:calc(110px + var(--safe-b)); }
   <div class="tabbar-inner">
     <a href="#/tonight" data-tab="tonight"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/></svg><span>Tonight</span></a>
     <a href="#/meals" data-tab="meals"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 11.5h17a8.5 8.5 0 0 1-17 0z"/><path d="M9.5 8c0-1.3 1.2-1.4 1.2-2.8M14 8c0-1.3 1.2-1.4 1.2-2.8"/></svg><span>Meals</span></a>
-    <a href="#/sweet" data-tab="sweet"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3"/><path d="M4.8 10.2c1.8.8 2.6-.9 4.3 0M14.8 8.6c1.4.9 2.4-.6 4 .6"/></svg><span>Sweet</span></a>
-    <a href="#/inventory" data-tab="inventory"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 6.5h10M10 12h10M10 17.5h10"/><path d="M3.8 6.4l1.3 1.3 2.2-2.4M3.8 11.9l1.3 1.3 2.2-2.4"/><circle cx="5.5" cy="17.5" r="1.2"/></svg><span>Inventory</span></a>
+    <a href="#/shopping" data-tab="shopping"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2.2l2.3 10.5a2 2 0 0 0 2 1.6h7.6a2 2 0 0 0 2-1.5L21 8H6.2"/><circle cx="10" cy="19.5" r="1.4"/><circle cx="17" cy="19.5" r="1.4"/></svg><span>Shopping</span></a>
+    <a href="#/kitchen" data-tab="kitchen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 6.5h10M10 12h10M10 17.5h10"/><path d="M3.8 6.4l1.3 1.3 2.2-2.4M3.8 11.9l1.3 1.3 2.2-2.4"/><circle cx="5.5" cy="17.5" r="1.2"/></svg><span>Kitchen</span></a>
   </div>
 </nav>
 <div id="sheet" hidden></div>
@@ -615,6 +644,18 @@ const NUT = {
   p_beef:      [200,27.5,0,9.5,0,85,420,15,3,0,0,0.1,26],       // cooked
   p_chicken:   [165,31,0,3.6,0,74,256,15,1,9,0,0.1,29],         // cooked breast
   p_thighs:    [185,24,0,9.5,0,105,240,10,1.2,18,0,0.1,24],     // cooked thigh
+  steak:       [130,21,0,4.5,0,52,340,20,1.6,0,0,0.1,24],       // top sirloin, raw, trimmed
+  sausage:     [180,14,3,12,0,700,250,20,1,0,0,0,20],           // chicken sausage
+  rotisserie:  [170,25,0,7.5,0,330,240,15,1,12,0,0.1,25],       // rotisserie chicken, meat only
+  tuna:        [116,26,0,1,0,320,240,10,1.3,5,0,1.7,30],        // pouch tuna in water
+  pasta:       [371,13,75,1.5,3.2,6,223,21,3.3,0,0,0,53],       // dry
+  marinara:    [50,1.6,7.5,1.5,1.7,380,350,25,0.8,25,7,0,15],
+  tomatoes:    [32,1.6,7.3,0.2,1.9,180,220,30,0.8,20,9,0,12],   // canned diced
+  hashbrowns:  [80,2,17,0.2,1.6,25,380,10,0.5,0,7,0,20],        // frozen shredded, plain
+  dumplings:   [200,8,28,6,2,420,180,30,1.8,0,0,0,20],          // frozen potstickers
+  tortillas:   [290,8,46,8,3,560,130,120,2.5,0,0,0,25],
+  chilipowder: [282,13.5,50,14.3,34.8,1640,1950,330,17,2540,0.6,0,150],
+  cornstarch:  [381,0.3,91,0.1,0.9,9,3,2,0.5,0,0,0,3],
   yogurt:      [73,10,3.9,1.9,0,34,141,115,0.1,20,0,0,11],      // 2% Greek
   eggs:        [143,12.6,0.7,9.5,0,142,138,56,1.8,160,0,2,12],
   protein:     [400,78,10,5,1,300,500,450,1,0,0,0,60],          // whey, generic
@@ -707,35 +748,45 @@ const AISLES = ['Meat','Produce','Dairy & eggs','Frozen','Grains & dry goods','C
 
 const ITEMS = [
   // PROTEIN
-  { id:'chicken', name:'Chicken breast', cat:'protein', aisle:'Meat', shop:{u:'lb'} },
-  { id:'thighs', name:'Chicken thighs', cat:'protein', aisle:'Meat', shop:{u:'lb'} },
-  { id:'beef', name:'Lean ground beef (93/7)', cat:'protein', aisle:'Meat', shop:{u:'lb'} },
-  { id:'yogurt', name:'Plain Greek yogurt', cat:'protein', aisle:'Dairy & eggs', shop:{u:'unit', g:240, one:'cup', many:'cups', hint:'32-oz tub ≈ 3½ cups'} },
-  { id:'eggs', name:'Eggs', cat:'protein', aisle:'Dairy & eggs', shop:{u:'unit', g:50, one:'egg', many:'eggs', round:1} },
+  { id:'chicken', name:'Chicken breast', cat:'protein', aisle:'Meat', shop:{u:'lb'}, fresh:true },
+  { id:'thighs', name:'Chicken thighs', cat:'protein', aisle:'Meat', shop:{u:'lb'}, fresh:true },
+  { id:'beef', name:'Lean ground beef (93/7)', cat:'protein', aisle:'Meat', shop:{u:'lb'}, fresh:true },
+  { id:'steak', name:'Sirloin steak', cat:'protein', aisle:'Meat', shop:{u:'lb'}, fresh:true },
+  { id:'sausage', name:'Chicken sausage', cat:'protein', aisle:'Meat', shop:{u:'unit', g:85, one:'link', many:'links', round:1}, fresh:true },
+  { id:'rotisserie', name:'Rotisserie chicken', cat:'protein', aisle:'Meat', shop:{u:'unit', g:500, one:'chicken', many:'chickens', round:1}, fresh:true },
+  { id:'tuna', name:'Tuna pouches', cat:'protein', aisle:'Canned & jarred', shop:{u:'unit', g:110, one:'pouch', many:'pouches', round:1} },
+  { id:'yogurt', name:'Plain Greek yogurt', cat:'protein', aisle:'Dairy & eggs', shop:{u:'unit', g:240, one:'cup', many:'cups', hint:'32-oz tub ≈ 3½ cups'}, fresh:true },
+  { id:'eggs', name:'Eggs', cat:'protein', aisle:'Dairy & eggs', shop:{u:'unit', g:50, one:'egg', many:'eggs', round:1}, fresh:true },
   { id:'protein', name:'Protein powder', cat:'protein', aisle:'Baking', shop:{u:'unit', g:30, one:'scoop', many:'scoops', round:1} },
   // CARBS
   { id:'rice', name:'Jasmine rice', cat:'carbs', aisle:'Grains & dry goods', shop:{u:'unit', g:474, one:'cup dry', many:'cups dry', round:0.5} },
   { id:'ricepouch', name:'Microwave rice pouches', cat:'carbs', aisle:'Grains & dry goods', shop:{u:'unit', g:250, one:'pouch', many:'pouches', round:1} },
-  { id:'potatoes', name:'Potatoes (Yukon Gold)', cat:'carbs', aisle:'Produce', shop:{u:'lb'} },
+  { id:'potatoes', name:'Potatoes (Yukon Gold)', cat:'carbs', aisle:'Produce', shop:{u:'lb'}, fresh:true },
+  { id:'pasta', name:'Pasta', cat:'carbs', aisle:'Grains & dry goods', shop:{u:'unit', g:454, one:'box (1 lb)', many:'boxes (1 lb)', round:1} },
+  { id:'hashbrowns', name:'Frozen hash browns', cat:'carbs', aisle:'Frozen', shop:{u:'unit', g:567, one:'bag', many:'bags', round:1} },
+  { id:'tortillas', name:'Tortillas', cat:'carbs', aisle:'Grains & dry goods', shop:{u:'have'}, fresh:true },
+  { id:'dumplings', name:'Frozen dumplings', cat:'carbs', aisle:'Frozen', shop:{u:'have'} },
   { id:'oats', name:'Oats / oat flour', cat:'carbs', alsoCat:'baking', aisle:'Grains & dry goods', shop:{u:'unit', g:90, one:'cup', many:'cups', round:0.5} },
   { id:'graham', name:'Graham crackers', cat:'carbs', aisle:'Snacks & toppings', shop:{u:'have'} },
   // PRODUCE
-  { id:'bananas', name:'Bananas', cat:'produce', aisle:'Produce', shop:{u:'unit', g:118, one:'banana', many:'bananas', round:1} },
-  { id:'berries', name:'Berries', cat:'produce', aisle:'Produce', shop:{u:'unit', g:150, one:'cup', many:'cups', round:0.5} },
-  { id:'broccoli', name:'Broccoli florets', cat:'produce', aisle:'Produce', shop:{u:'lb'} },
+  { id:'bananas', name:'Bananas', cat:'produce', aisle:'Produce', shop:{u:'unit', g:118, one:'banana', many:'bananas', round:1}, fresh:true },
+  { id:'berries', name:'Berries', cat:'produce', aisle:'Produce', shop:{u:'unit', g:150, one:'cup', many:'cups', round:0.5}, fresh:true },
+  { id:'broccoli', name:'Broccoli florets', cat:'produce', aisle:'Produce', shop:{u:'lb'}, fresh:true },
   { id:'corn', name:'Corn (frozen)', cat:'produce', aisle:'Frozen', shop:{u:'unit', g:165, one:'cup', many:'cups', round:0.5, hint:'12-oz bag ≈ 2 cups'} },
+  { id:'tomatoes', name:'Canned diced tomatoes', cat:'produce', aisle:'Canned & jarred', shop:{u:'unit', g:400, one:'can (14 oz)', many:'cans (14 oz)', round:1} },
   { id:'blackbeans', name:'Black beans', cat:'produce', aisle:'Canned & jarred', shop:{u:'unit', g:255, one:'can (15 oz)', many:'cans (15 oz)', round:1} },
-  { id:'lettuce', name:'Romaine lettuce', cat:'produce', aisle:'Produce', shop:{u:'unit', g:280, one:'head', many:'heads', round:1} },
-  { id:'cucumber', name:'Cucumber', cat:'produce', aisle:'Produce', shop:{u:'unit', g:300, one:'cucumber', many:'cucumbers', round:1} },
-  { id:'tomato', name:'Cherry tomatoes', cat:'produce', aisle:'Produce', shop:{u:'unit', g:300, one:'pint', many:'pints', round:1} },
-  { id:'spinach', name:'Baby spinach', cat:'produce', aisle:'Produce', shop:{u:'unit', g:142, one:'box (5 oz)', many:'boxes (5 oz)', round:1} },
-  { id:'peppers', name:'Peppers & onions', cat:'produce', aisle:'Produce', shop:{u:'lb'} },
-  { id:'greenonion', name:'Green onions', cat:'produce', aisle:'Produce', shop:{u:'unit', g:100, one:'bunch', many:'bunches', round:1} },
-  { id:'lemon', name:'Lemons', cat:'produce', aisle:'Produce', shop:{u:'unit', g:45, one:'lemon', many:'lemons', round:1} },
-  { id:'lime', name:'Limes', cat:'produce', aisle:'Produce', shop:{u:'unit', g:30, one:'lime', many:'limes', round:1} },
+  { id:'lettuce', name:'Romaine lettuce', cat:'produce', aisle:'Produce', shop:{u:'unit', g:280, one:'head', many:'heads', round:1}, fresh:true },
+  { id:'cucumber', name:'Cucumber', cat:'produce', aisle:'Produce', shop:{u:'unit', g:300, one:'cucumber', many:'cucumbers', round:1}, fresh:true },
+  { id:'tomato', name:'Cherry tomatoes', cat:'produce', aisle:'Produce', shop:{u:'unit', g:300, one:'pint', many:'pints', round:1}, fresh:true },
+  { id:'spinach', name:'Baby spinach', cat:'produce', aisle:'Produce', shop:{u:'unit', g:142, one:'box (5 oz)', many:'boxes (5 oz)', round:1}, fresh:true },
+  { id:'peppers', name:'Peppers & onions', cat:'produce', aisle:'Produce', shop:{u:'lb'}, fresh:true },
+  { id:'greenonion', name:'Green onions', cat:'produce', aisle:'Produce', shop:{u:'unit', g:100, one:'bunch', many:'bunches', round:1}, fresh:true },
+  { id:'lemon', name:'Lemons', cat:'produce', aisle:'Produce', shop:{u:'unit', g:45, one:'lemon', many:'lemons', round:1}, fresh:true },
+  { id:'lime', name:'Limes', cat:'produce', aisle:'Produce', shop:{u:'unit', g:30, one:'lime', many:'limes', round:1}, fresh:true },
   // FLAVOR
   { id:'soy', name:'Low-sodium soy sauce', cat:'flavor', aisle:'Condiments & oils', shop:{u:'have'} },
   { id:'bbq', name:'BBQ sauce', cat:'flavor', aisle:'Condiments & oils', shop:{u:'have'} },
+  { id:'marinara', name:'Marinara sauce', cat:'flavor', aisle:'Canned & jarred', shop:{u:'unit', g:680, one:'jar (24 oz)', many:'jars (24 oz)', round:1} },
   { id:'salsa', name:'Salsa', cat:'flavor', aisle:'Canned & jarred', shop:{u:'unit', g:450, one:'jar (16 oz)', many:'jars (16 oz)', round:1} },
   { id:'honey', name:'Honey', cat:'flavor', aisle:'Condiments & oils', shop:{u:'have'} },
   { id:'maple', name:'Maple syrup', cat:'flavor', aisle:'Condiments & oils', shop:{u:'have'} },
@@ -747,7 +798,7 @@ const ITEMS = [
   { id:'cinnamon', name:'Cinnamon', cat:'flavor', aisle:'Spices', shop:{u:'have'}, staple:true },
   { id:'vanilla', name:'Vanilla extract', cat:'flavor', aisle:'Baking', shop:{u:'have'}, staple:true },
   { id:'parmesan', name:'Parmesan', cat:'flavor', aisle:'Dairy & eggs', shop:{u:'have'} },
-  { id:'feta', name:'Feta', cat:'flavor', aisle:'Dairy & eggs', shop:{u:'unit', g:28, one:'oz', many:'oz', round:1} },
+  { id:'feta', name:'Feta', cat:'flavor', aisle:'Dairy & eggs', shop:{u:'unit', g:28, one:'oz', many:'oz', round:1}, fresh:true },
   // SPICES
   { id:'cumin', name:'Cumin', cat:'spices', aisle:'Spices', shop:{u:'have'}, staple:true },
   { id:'paprika', name:'Paprika', cat:'spices', aisle:'Spices', shop:{u:'have'}, staple:true },
@@ -756,6 +807,8 @@ const ITEMS = [
   { id:'garlicpowder', name:'Garlic powder', cat:'spices', aisle:'Spices', shop:{u:'have'}, staple:true },
   { id:'onionpowder', name:'Onion powder', cat:'spices', aisle:'Spices', shop:{u:'have'}, staple:true },
   { id:'chiliflakes', name:'Red pepper flakes', cat:'spices', aisle:'Spices', shop:{u:'have'} },
+  { id:'chilipowder', name:'Chili powder', cat:'spices', aisle:'Spices', shop:{u:'have'}, staple:true },
+  { id:'cornstarch', name:'Cornstarch', cat:'spices', aisle:'Baking', shop:{u:'have'}, staple:true },
   { id:'salt', name:'Salt', cat:'spices', aisle:'Spices', shop:{u:'have'}, staple:true },
   { id:'pepper', name:'Black pepper', cat:'spices', aisle:'Spices', shop:{u:'have'}, staple:true },
   // BAKING
@@ -763,8 +816,8 @@ const ITEMS = [
   { id:'chips', name:'Dark chocolate chips', cat:'baking', aisle:'Baking', shop:{u:'unit', g:170, one:'cup', many:'cups', round:0.5, hint:'10-oz bag ≈ 1⅔ cups'} },
   { id:'darkchoc', name:'Dark chocolate bar (70%)', cat:'baking', aisle:'Baking', shop:{u:'unit', g:28.35, one:'oz', many:'oz', round:1} },
   { id:'cocoa', name:'Unsweetened cocoa', cat:'baking', aisle:'Baking', shop:{u:'have'} },
-  { id:'creamcheese', name:'Cream cheese', cat:'baking', aisle:'Dairy & eggs', shop:{u:'have'} },
-  { id:'milk', name:'Milk', cat:'baking', aisle:'Dairy & eggs', shop:{u:'unit', g:244, one:'cup', many:'cups', round:0.5} },
+  { id:'creamcheese', name:'Cream cheese', cat:'baking', aisle:'Dairy & eggs', shop:{u:'have'}, fresh:true },
+  { id:'milk', name:'Milk', cat:'baking', aisle:'Dairy & eggs', shop:{u:'unit', g:244, one:'cup', many:'cups', round:0.5}, fresh:true },
   { id:'butter', name:'Butter', cat:'baking', aisle:'Dairy & eggs', shop:{u:'have'} },
   { id:'powdered', name:'Powdered sugar', cat:'baking', aisle:'Baking', shop:{u:'have'} },
   { id:'sugar', name:'Sugar', cat:'baking', aisle:'Baking', shop:{u:'have'} },
@@ -777,16 +830,17 @@ const ITEMS = [
   { id:'crispyonion', name:'Crispy fried onions', cat:'extras', aisle:'Snacks & toppings', shop:{u:'have'} },
   { id:'pickles', name:'Dill pickles', cat:'extras', aisle:'Canned & jarred', shop:{u:'have'} },
   { id:'pickledonion', name:'Pickled red onions', cat:'extras', aisle:'Canned & jarred', shop:{u:'have'} },
-  { id:'cilantro', name:'Cilantro', cat:'extras', aisle:'Produce', shop:{u:'unit', g:60, one:'bunch', many:'bunches', round:1} },
-  { id:'jalapeno', name:'Jalapeño', cat:'extras', aisle:'Produce', shop:{u:'unit', g:14, one:'pepper', many:'peppers', round:1} },
-  { id:'cheese', name:'Shredded cheese', cat:'extras', aisle:'Dairy & eggs', shop:{u:'have'} },
+  { id:'cilantro', name:'Cilantro', cat:'extras', aisle:'Produce', shop:{u:'unit', g:60, one:'bunch', many:'bunches', round:1}, fresh:true },
+  { id:'jalapeno', name:'Jalapeño', cat:'extras', aisle:'Produce', shop:{u:'unit', g:14, one:'pepper', many:'peppers', round:1}, fresh:true },
+  { id:'cheese', name:'Shredded cheese', cat:'extras', aisle:'Dairy & eggs', shop:{u:'have'}, fresh:true },
   { id:'olives', name:'Kalamata olives', cat:'extras', aisle:'Canned & jarred', shop:{u:'have'} },
   { id:'hummus', name:'Hummus', cat:'extras', aisle:'Dairy & eggs', shop:{u:'have'} },
-  { id:'herbs', name:'Fresh dill or parsley', cat:'extras', aisle:'Produce', shop:{u:'unit', g:30, one:'bunch', many:'bunches', round:1} },
+  { id:'herbs', name:'Fresh dill or parsley', cat:'extras', aisle:'Produce', shop:{u:'unit', g:30, one:'bunch', many:'bunches', round:1}, fresh:true },
   // PREPPED (set by Prep mode)
-  { id:'p_rice', name:'Cooked rice', cat:'prepped', aisle:'Grains & dry goods', shop:{u:'have'}, prepped:true },
-  { id:'p_chicken', name:'Cooked chicken', cat:'prepped', aisle:'Meat', shop:{u:'have'}, prepped:true },
-  { id:'p_beef', name:'Cooked ground beef', cat:'prepped', aisle:'Meat', shop:{u:'have'}, prepped:true },
+  { id:'p_rice', name:'Cooked rice', cat:'prepped', aisle:'Grains & dry goods', shop:{u:'have'}, prepped:true, fresh:true },
+  { id:'p_chicken', name:'Cooked chicken', cat:'prepped', aisle:'Meat', shop:{u:'have'}, prepped:true, fresh:true },
+  { id:'p_beef', name:'Cooked ground beef', cat:'prepped', aisle:'Meat', shop:{u:'have'}, prepped:true, fresh:true },
+  { id:'p_bananas', name:'Frozen banana coins', cat:'prepped', aisle:'Produce', shop:{u:'have'}, prepped:true, fresh:true },
 ];
 const ITEM = Object.fromEntries(ITEMS.map(i => [i.id, i]));
 
@@ -810,7 +864,7 @@ const RECIPES = [
 {
   id:'korean', type:'dinner', name:'Korean Beef Bowl', short:'Korean Beef',
   flavor:'Sweet-savory beef glazed with soy, honey, garlic and ginger, over jasmine rice with broccoli.',
-  difficulty:'Easy', protein:'beef', tags:['beef','one pan','freezes well'],
+  difficulty:'Easy', protein:'beef', prepable:true, tags:['beef','one pan','freezes well'],
   bowl:[['rice',0.42],['beef',0.34],['broccoli',0.24]], garnish:'greenonion',
   ingredients:[
     { id:'beef', q:10, u:'oz', g:283, role:'protein', core:true, any:['beef','p_beef'], note:'raw · about {cooked} cooked', sub:'Ground turkey works — add ¼ tsp extra sesame oil.' },
@@ -871,7 +925,7 @@ const RECIPES = [
 {
   id:'mexican', type:'dinner', name:'Mexican Chicken Bowl', short:'Mexican Chicken',
   flavor:'Cumin-paprika chicken with lime, black beans, corn and a cool salsa-yogurt sauce. Mild by default.',
-  difficulty:'Easy', protein:'chicken', hasCut:true, tags:['chicken','mild','no avocado'],
+  difficulty:'Easy', protein:'chicken', hasCut:true, prepable:true, tags:['chicken','mild','no avocado'],
   bowl:[['rice',0.34],['chicken',0.30],['lettuce',0.14],['beans',0.11],['corn',0.11]], garnish:'salsa',
   ingredients:[
     { id:'chicken', q:11, u:'oz', g:312, role:'protein', core:true, any:['chicken','p_chicken'], note:'raw breast · about {cooked} cooked', sub:'Boneless thighs stay juicier and reheat better. Same method; cook to 175°F.' },
@@ -940,7 +994,7 @@ const RECIPES = [
 {
   id:'med', type:'dinner', name:'Mediterranean Chicken Bowl', short:'Mediterranean Chicken',
   flavor:'Lemon-oregano chicken with cucumber, tomato and spinach, finished with a garlic yogurt sauce.',
-  difficulty:'Easy', protein:'chicken', hasCut:true, tags:['chicken','fresh','bright'],
+  difficulty:'Easy', protein:'chicken', hasCut:true, prepable:true, tags:['chicken','fresh','bright'],
   bowl:[['rice',0.34],['chicken',0.30],['spinach',0.12],['cucumber',0.12],['tomato',0.12]], garnish:'yogurt',
   ingredients:[
     { id:'chicken', q:11, u:'oz', g:312, role:'protein', core:true, any:['chicken','p_chicken'], note:'raw breast · about {cooked} cooked', sub:'Boneless thighs stay juicier. Cook to 175°F.' },
@@ -1005,13 +1059,15 @@ const RECIPES = [
 {
   id:'bbq', type:'dinner', name:'Smoky BBQ Beef Bowl', short:'Smoky BBQ Beef',
   flavor:'Smoked-paprika beef in sticky BBQ sauce with broccoli and corn, over rice or crispy potatoes.',
-  difficulty:'Easy', protein:'beef', tags:['beef','rice or potatoes','comfort'], hasCarbChoice:true, hasSauceChoice:true,
+  difficulty:'Easy', protein:'beef', tags:['beef','rice, potatoes or hash browns','comfort'], carbs:['rice','potato','hash'], prepable:true, hasSauceChoice:true,
   bowl:[['rice',0.40],['beef',0.34],['broccoli',0.16],['corn',0.10]], garnish:'bbq',
   ingredients:[
     { id:'beef', q:10, u:'oz', g:283, role:'protein', core:true, any:['beef','p_beef'], note:'raw · about {cooked} cooked' },
     { if:'rice', id:'rice', name:'Jasmine rice', q:1.5, u:'cup', g:237, role:'carb', core:true, any:['rice','p_rice','ricepouch'], note:'cooked · {dry} dry' },
     { if:'potato', id:'potatoes', q:12, u:'oz', g:340, role:'carb', core:true, note:'about 1 large, ¾-inch cubes' },
     { if:'potato', id:'oliveoil', q:1, u:'tsp', g:4.5, role:'other', note:'for crisping' },
+    { if:'hash', id:'hashbrowns', q:1.5, u:'cup', g:140, role:'carb', core:true, note:'frozen shredded' },
+    { if:'hash', id:'oliveoil', key:'oilHash', q:1, u:'tsp', g:4.5, role:'other', note:'for crisping' },
     { id:'broccoli', q:1, u:'cup', g:90, role:'veg', core:true, note:'fresh or frozen florets' },
     { id:'corn', q:0.5, u:'cup', g:82, role:'veg', note:'frozen is fine' },
     { id:'bbq', q:2, u:'tbsp', g:34, role:'sauce', core:true, group:'Sauce' },
@@ -1040,6 +1096,9 @@ const RECIPES = [
       text:'Cut {q:potatoes} potatoes into ¾-inch cubes — no need to peel. Put them in a microwave-safe bowl with 1 tbsp water, cover with a plate and microwave {potTime}, until a fork goes in with slight resistance.' },
     { title:'Mix the seasoning', prep:true, hands:2,
       text:'Stir {q:garlicpowder} garlic powder, {q:onionpowder} onion powder, {q:smokedpaprika} smoked paprika, {q:pepper} black pepper and {q:salt} salt in a small bowl.' },
+    { if:'hash', key:'potcrisp', title:'Crisp the hash browns', hands:2, passive:9, timer:9,
+      text:'Heat {q:oilHash} oil in the skillet over medium-high. Spread {q:hashbrowns} frozen hash browns in an even layer and press them flat. Leave them 4–5 minutes until the bottom is golden, flip in sections, and give them 3–4 minutes more. Move to a plate and keep the pan hot.',
+      warn:'Don’t stir them. Pressing and leaving them alone is what makes them crisp.' },
     { if:'potato', waitFor:'potmic', key:'potcrisp', title:'Crisp the potatoes', hands:1, passive:7, timer:7,
       text:'Drain the potatoes. Heat {q:oliveoil} oil in the skillet over medium-high. Add the potatoes in one layer{potPans} with a pinch of salt and a pinch of the seasoning. Cook 6–7 minutes, turning every 2 minutes, until golden. Move them to a bowl and keep the pan hot.' },
     { waitFor:'potcrisp', key:'beef', title:'Brown the beef', hands:1, passive:7, timer:7,
@@ -1065,6 +1124,292 @@ const RECIPES = [
     storage:['Into the fridge within 2 hours of cooking — within 1 hour for rice if you can.','Fridge: 3–4 days.','Freezer: up to 2–3 months. Potatoes soften in the freezer, so eat potato bowls from the fridge first and re-crisp frozen ones in a hot skillet after reheating.','Yogurt BBQ sauce: 3–4 days, kept cold.'],
     reheat:['Add 1 tbsp water and cover loosely. Microwave 1½ minutes, stir, then about 1 minute more until 165°F throughout.','Potatoes: for crisp edges, reheat them in a hot dry skillet for 3–4 minutes, or in an air fryer at 400°F for 4–5 minutes.','Add fresh BBQ sauce after heating, not before. It scorches at the edges.'],
     fresh:['Cold pickles and fresh green onion on top.','A fresh spoon of BBQ sauce and a pinch of smoked paprika.'],
+  },
+},
+
+{
+  id:'friedrice', type:'dinner', name:'Chicken Fried Rice', short:'Fried Rice',
+  flavor:'Cold rice fried hard in a hot pan with egg, chicken and green onion. The best thing to do with leftovers.',
+  difficulty:'Easy', protein:'chicken', tags:['uses leftovers','15 min','one pan'],
+  bowl:[['rice',0.5],['chicken',0.24],['egg',0.14],['corn',0.12]], garnish:'greenonion',
+  ingredients:[
+    { id:'p_chicken', name:'Cooked chicken', q:1.25, u:'cup', g:170, role:'protein', core:true, any:['p_chicken','rotisserie'], note:'about 6 oz, chopped', sub:'Rotisserie chicken, or cook 8 oz raw chicken first.' },
+    { id:'p_rice', name:'Cooked rice', q:1.5, u:'cup', g:237, role:'carb', core:true, any:['p_rice','ricepouch','rice'], note:'cold, from the fridge', sub:'Fresh rice: spread it on a plate for 5 minutes to dry and cool.' },
+    { id:'eggs', q:2, u:'egg', g:100, role:'protein', core:true },
+    { id:'corn', q:0.5, u:'cup', g:82, role:'veg', note:'frozen is fine' },
+    { id:'greenonion', q:3, u:'tbsp', g:18, role:'veg', note:'sliced, whites and tops kept apart' },
+    { id:'oliveoil', q:2, u:'tsp', g:9, role:'other' },
+    { id:'soy', q:1.5, u:'tbsp', g:24, role:'sauce', core:true, group:'Sauce' },
+    { id:'sesameoil', q:1, u:'tsp', g:4.5, role:'sauce', group:'Sauce' },
+    { id:'garlic', q:1, u:'clove', g:3, role:'aromatic', group:'Sauce', any:['garlic','garlicpowder'], note:'minced', sub:'¼ tsp garlic powder.' },
+  ],
+  heat:{ medium:[{ id:'chilisauce', q:1, u:'tsp', g:6, note:'stirred in at the end' }], hot:[{ id:'chilisauce', q:2, u:'tsp', g:12, note:'stirred in at the end' }] },
+  heatText:' Stir in {q:chilisauce} gochujang or sriracha at the end.',
+  tiers:{
+    base:{ text:'Rice, chicken, egg, corn, green onion.' },
+    better:{ text:'Sesame seeds and a fried egg on top.', finish:'Scatter sesame seeds and slide a fried egg on top.',
+      add:[{ id:'sesame', q:1, u:'tsp', g:3 },{ id:'eggs', key:'eggTop', q:1, u:'egg', g:50, note:'fried, on top' }] },
+    loaded:{ text:'Everything in Better, plus crispy onions and extra chili sauce.', finish:'Crispy onions over the top.',
+      add:[{ id:'crispyonion', q:2, u:'tbsp', g:7 },{ id:'chilisauce', key:'chiliTop', q:1, u:'tsp', g:6, note:'drizzled' }] },
+  },
+  equipment:['Large skillet or wok','Spatula','Small bowl for the eggs','Cutting board and knife'],
+  mise:['Cold cooked rice','Cooked chicken','Eggs','Corn','Green onion','Soy sauce and sesame oil','Garlic','Oil'],
+  steps:[
+    { title:'Break up the rice', prep:true, hands:2,
+      text:'Cold rice from the fridge works best. Break up the clumps with your fingers so every grain is loose. Fresh rice? Spread {q:p_rice} on a plate for 5 minutes first.',
+      warn:'Warm, sticky rice steams into mush. Cold and dry is the whole trick.' },
+    { title:'Prep everything before the pan is hot', prep:true, hands:4,
+      text:'This cooks fast. Beat {q:eggs}. Chop {q:p_chicken} cooked chicken. Slice {q:greenonion} green onion, keeping the white parts and the dark tops in separate piles. Mince {q:garlic} garlic. Measure {q:soy} soy sauce and {q:sesameoil} sesame oil.' },
+    { key:'eggs', title:'Scramble the eggs', hands:3,
+      text:'Heat 1 tsp of the oil in the skillet over medium. Pour in the eggs and stir slowly until just set, about 1 minute. Slide them onto a plate.',
+      safety:'Cook the eggs until no liquid remains.' },
+    { key:'fry', title:'Fry the rice', hands:2, passive:4, timer:4,
+      text:'Turn the heat to medium-high and add the rest of the oil ({q:oliveoil} total). Add the rice, press it flat, and leave it alone 1–2 minutes so the bottom toasts. Stir, press flat again, and give it another 1–2 minutes.',
+      warn:'Constant stirring steams the rice. Press and wait.' },
+    { title:'Add the chicken, corn and garlic', hands:1, passive:2, timer:2,
+      text:'Stir in the chicken, {q:corn} corn, the garlic and the white parts of the green onion. Cook 2 minutes, until everything is steaming hot.',
+      safety:'Already-cooked rice and chicken need to come back to steaming hot, 165°F.' },
+    { title:'Sauce it', hands:1, passive:1,
+      text:'Pour the soy sauce and sesame oil around the edge of the pan rather than into the middle — it hits the hot metal and caramelizes. Stir for 1 minute.{heat}' },
+    { title:'Fold the eggs back in', hands:1,
+      text:'Break the eggs into pieces with the spatula and stir them through.' },
+    { title:'Finish', hands:1, finish:true,
+      text:'Green onion tops over everything.{tierFinish} Taste — a few drops more soy if it needs salt.' },
+  ],
+  finish:'Green onion tops over the whole bowl, with the egg in visible pieces rather than stirred to nothing.',
+  subs:['No cooked chicken: rotisserie chicken, or leave it out and add a third egg.','No corn: peas, or frozen mixed vegetables.','Day-old rice is best; a rice pouch cooled in the fridge for 20 minutes works too.'],
+  leftovers:{
+    separate:['This is already reheated rice. Make what you plan to eat.','If you have extra, pack it alone — nothing needs to stay separate.'],
+    storage:['Cool it fast and refrigerate within 1 hour.','Eat it the next day, and reheat it only once.','Don’t freeze it: the egg and rice both turn rubbery.'],
+    reheat:['Microwave 1½–2 minutes with a sprinkle of water, stirring once, until steaming hot (165°F).','Better: 3 minutes in a hot dry skillet, pressed flat, so it crisps again.'],
+    fresh:['Fresh green onion and a few drops of sesame oil.','A fried egg on top makes it a new meal.'],
+  },
+},
+{
+  id:'beefbroccoli', type:'dinner', name:'Beef and Broccoli', short:'Beef & Broccoli',
+  flavor:'Seared steak strips and broccoli in a glossy soy-garlic sauce over jasmine rice.',
+  difficulty:'Moderate', protein:'beef', tags:['steak','20 min','takeout at home'],
+  bowl:[['rice',0.42],['beef',0.32],['broccoli',0.26]], garnish:'sesame',
+  ingredients:[
+    { id:'steak', q:8, u:'oz', g:227, role:'protein', core:true, any:['steak','beef'], note:'sirloin or flank, sliced thin', sub:'Lean ground beef works: brown it and skip the searing step.' },
+    { id:'rice', name:'Jasmine rice', q:1.5, u:'cup', g:237, role:'carb', core:true, any:['rice','p_rice','ricepouch'], note:'cooked · {dry} dry' },
+    { id:'broccoli', q:2, u:'cup', g:180, role:'veg', core:true, note:'florets' },
+    { id:'soy', q:2, u:'tbsp', g:32, role:'sauce', core:true, group:'Sauce' },
+    { id:'honey', q:2, u:'tsp', g:14, role:'sauce', group:'Sauce', any:['honey','maple'] },
+    { id:'cornstarch', q:1, u:'tsp', g:2.5, role:'sauce', group:'Sauce', note:'plus 3 tbsp water', sub:'Skip it — the sauce stays thin but tastes the same.' },
+    { id:'garlic', q:2, u:'clove', g:6, role:'aromatic', group:'Sauce', any:['garlic','garlicpowder'], note:'minced' },
+    { id:'ginger', q:1, u:'tsp', g:2, role:'aromatic', group:'Sauce', note:'grated', sub:'⅛ tsp ground ginger.' },
+    { id:'oliveoil', q:2, u:'tsp', g:9, role:'other' },
+    { id:'sesameoil', q:0.5, u:'tsp', g:2.3, role:'sauce', group:'Sauce' },
+  ],
+  heat:{ medium:[{ id:'chiliflakes', q:0.25, u:'tsp', g:0.5 }], hot:[{ id:'chiliflakes', q:0.5, u:'tsp', g:1 }] },
+  heatText:' Add {q:chiliflakes} red pepper flakes with the garlic.',
+  tiers:{
+    base:{ text:'Steak, broccoli, rice, soy-garlic sauce.' },
+    better:{ text:'Toasted sesame seeds and green onion.', finish:'Sesame seeds and sliced green onion over the top.',
+      add:[{ id:'sesame', q:1, u:'tsp', g:3 },{ id:'greenonion', q:1, u:'tbsp', g:6, note:'sliced' }] },
+    loaded:{ text:'Everything in Better, plus chili sauce and crispy onions.', finish:'Chili sauce in a thin line and crispy onions on top.',
+      add:[{ id:'chilisauce', q:1, u:'tsp', g:6 },{ id:'crispyonion', q:2, u:'tbsp', g:7 }] },
+  },
+  equipment:['Large skillet (12-inch)','Small pot with lid, or a rice cooker','Microwave-safe bowl and a plate','Small bowl for the sauce','Sharp knife'],
+  mise:['Steak from the fridge','Rice','Broccoli','Soy sauce, honey, sesame oil','Cornstarch','Garlic and ginger','Oil'],
+  steps:[
+    Object.assign({}, RICE_STEP, {}),
+    { title:'Slice the steak thin', prep:true, hands:5,
+      text:'Freeze the steak for 10 minutes if you have time — it slices far more cleanly. Cut {q:steak} steak across the grain into strips about ¼ inch thick. Pat them dry.',
+      warn:'Across the grain, not with it. Thin slices cut the wrong way come out chewy.' },
+    { title:'Mix the sauce', prep:true, hands:3,
+      text:'Stir {q:soy} soy sauce, {q:honey} honey, {q:sesameoil} sesame oil, {q:cornstarch} cornstarch and 3 tbsp water until no lumps remain. Mince {q:garlic} garlic and grate {q:ginger} ginger into a separate little pile.{heat}' },
+    { key:'veg', title:'Steam the broccoli', hands:1, passive:4, timer:4,
+      text:'Microwave {q:broccoli} broccoli with {vegWater} water in a covered bowl {vegTime}. Drain it well — wet broccoli waters down the sauce.' },
+    { key:'beef', title:'Sear the steak', hands:2, passive:3, timer:3,
+      text:'Heat {q:oliveoil} oil in the skillet over high until it shimmers. Add the steak in one layer, in two batches if the pan is crowded. Leave it 1 minute, turn, and give it 1 minute more. It should still look barely pink.',
+      warn:'A crowded pan boils the steak grey. Two fast batches beat one slow one.',
+      safety:'Steak strips are safe once no red remains; they finish cooking in the sauce.' },
+    { waitFor:'beef', key:'sauce', title:'Garlic, ginger, then sauce', hands:1, passive:2, timer:2,
+      text:'Turn the heat to medium. Add the garlic and ginger for 30 seconds, then pour in the sauce (stir it again first — the cornstarch settles). Add the broccoli and toss for 1–2 minutes, until the sauce turns glossy and coats everything.' },
+    Object.assign({}, WARM_RICE_STEP, {}),
+    { waitAll:true, title:'Assemble', hands:2,
+      text:'Rice down first, then the beef and broccoli with all the sauce from the pan.' },
+    { title:'Finish', hands:1, finish:true, text:'{tierFinish}' },
+  ],
+  finish:'Rice, then beef and broccoli with every spoonful of pan sauce poured over.',
+  subs:['Ground beef instead of steak: brown it, then continue from the garlic step.','No cornstarch: the sauce stays thin. Simmer it an extra minute.','Frozen broccoli works; drain it really well.'],
+  leftovers:{
+    separate:['Beef, broccoli and rice can share one container.','Sesame seeds and crispy onions go on after reheating.'],
+    storage:['Into the fridge within 2 hours — rice within 1 hour if you can.','Fridge: 3–4 days.','Freezer: up to 2–3 months, though the broccoli softens.'],
+    reheat:['Sprinkle 1 tbsp water over it, cover loosely, microwave 1½ minutes, stir, then 1 minute more until steaming (165°F).','The steak keeps cooking as it reheats, so stop as soon as it’s hot.'],
+    fresh:['A few drops of sesame oil and fresh green onion.','A squeeze of lime cuts through the sweetness.'],
+  },
+},
+{
+  id:'pasta', type:'dinner', name:'Pasta with Meat Sauce', short:'Meat Sauce Pasta',
+  flavor:'Browned beef simmered into jarred marinara, with parmesan. The comfort option.',
+  difficulty:'Easy', protein:'beef', tags:['beef','pantry meal','freezes well'],
+  bowl:[['pasta',0.55],['sauce',0.45]], garnish:'parmesan',
+  ingredients:[
+    { id:'beef', q:8, u:'oz', g:227, role:'protein', core:true, any:['beef','p_beef'], note:'raw · about {cooked} cooked' },
+    { id:'pasta', q:3, u:'oz', g:85, role:'carb', core:true, note:'dry — about 1½ cups cooked', sub:'Any shape. Short shapes hold the sauce better.' },
+    { id:'marinara', q:0.75, u:'cup', g:184, role:'sauce', core:true, note:'jarred is the point' },
+    { id:'garlic', q:1, u:'clove', g:3, role:'aromatic', any:['garlic','garlicpowder'], note:'minced' },
+    { id:'oliveoil', q:1, u:'tsp', g:4.5, role:'other' },
+    { id:'parmesan', q:2, u:'tbsp', g:10, role:'garnish', note:'grated' },
+    { id:'salt', q:0.5, u:'tsp', g:3, role:'other', nutFactor:0.15, note:'for the pasta water — most of it drains away' },
+    { id:'pepper', q:0.125, u:'tsp', g:0.3, role:'other' },
+  ],
+  heat:{ medium:[{ id:'chiliflakes', q:0.25, u:'tsp', g:0.5 }], hot:[{ id:'chiliflakes', q:0.5, u:'tsp', g:1 }] },
+  heatText:' Add {q:chiliflakes} red pepper flakes with the garlic.',
+  tiers:{
+    base:{ text:'Beef, marinara, pasta, parmesan.' },
+    better:{ text:'A handful of spinach wilted in, and more parmesan.', finish:'Stir in the spinach until it wilts, then more parmesan over the top.',
+      add:[{ id:'spinach', q:1, u:'cup', g:30 },{ id:'parmesan', key:'parmExtra', q:1, u:'tbsp', g:5, note:'extra' }] },
+    loaded:{ text:'Everything in Better, plus melted shredded cheese and a drizzle of olive oil.', finish:'Scatter the cheese over the hot pasta so it melts, then a thread of olive oil.',
+      add:[{ id:'cheese', q:0.25, u:'cup', g:28 },{ id:'oliveoil', key:'oilTop', q:1, u:'tsp', g:4.5, note:'to finish' }] },
+  },
+  equipment:['Pot for the pasta','Large skillet','Colander','Grater'],
+  mise:['Beef from the fridge','Pasta','Marinara','Garlic','Parmesan','Salt and pepper'],
+  steps:[
+    { key:'water', title:'Get the water going', prep:true, hands:2, passive:8,
+      text:'Fill a pot, add {q:salt} salt, and put it on high with the lid on. Salted water is the only seasoning the pasta itself gets.' },
+    { key:'beef', title:'Brown the beef', hands:2, passive:6, timer:6,
+      text:'Heat {q:oliveoil} oil in the skillet over medium-high. Add {q:beef} beef, press it flat, leave it 2 minutes, then break it up and cook until no pink remains, about 6 minutes. Spoon off any pooled fat.',
+      safety:BEEF_SAFETY },
+    { waitFor:'beef', title:'Garlic, then the sauce', hands:1,
+      text:'Push the beef aside, add {q:garlic} garlic to the bare pan for 30 seconds, then pour in {q:marinara} marinara.{heat} Add {q:pepper} black pepper.' },
+    { key:'simmer', title:'Simmer the sauce', hands:1, passive:8, timer:8,
+      text:'Turn it to low and let it bubble gently while the pasta cooks. It thickens and stops tasting like the jar.' },
+    { waitFor:'water', key:'pasta', title:'Cook the pasta', hands:1, passive:10, timer:10,
+      text:'Add {q:pasta} pasta to the boiling water. Cook to the low end of the package time — it finishes in the sauce.',
+      warn:'Before draining, scoop out half a cup of the pasta water.' },
+    { waitFor:'pasta', title:'Bring it together', hands:2,
+      text:'Drain the pasta and tip it straight into the sauce with a splash of the pasta water. Stir over medium for 1 minute until every piece is coated.',
+      tip:'That starchy water is what makes the sauce cling instead of sliding off.' },
+    { waitAll:true, title:'Serve', hands:1,
+      text:'Into a bowl, with {q:parmesan} parmesan over the top.' },
+    { title:'Finish', hands:1, finish:true, text:'{tierFinish}' },
+  ],
+  finish:'Pasta tossed through the sauce rather than sauce poured on top, with parmesan over it.',
+  subs:['No marinara: a can of diced tomatoes, a pinch of salt and a longer simmer.','Ground turkey works the same way.','Add a splash of milk or cream for a pink sauce.'],
+  leftovers:{
+    separate:['Pack the pasta and sauce together — it keeps better mixed.','Cheese and fresh herbs go on after reheating.'],
+    storage:['Into the fridge within 2 hours. Fridge: 3–4 days.','Freezer: up to 3 months. It freezes better than any other dinner here.'],
+    reheat:['Add 1–2 tbsp water, cover, microwave 2 minutes, stir, then 1 minute more until steaming (165°F).','Pasta drinks the sauce overnight, so the extra water isn’t optional.'],
+    fresh:['Fresh parmesan and a crack of pepper.','A handful of spinach stirred into the hot pasta.'],
+  },
+},
+{
+  id:'sheetpan', type:'dinner', name:'Sheet-Pan Sausage and Potatoes', short:'Sheet-Pan Sausage',
+  flavor:'Sausage, peppers and potatoes roasted on one pan until the edges char. Almost all of it is oven time.',
+  difficulty:'Easy', protein:'sausage', tags:['hands-off','one pan','best leftovers'],
+  bowl:[['potato',0.4],['sausage',0.34],['peppers',0.26]], garnish:'none',
+  ingredients:[
+    { id:'sausage', q:3, u:'link', g:255, role:'protein', core:true, note:'cut into ½-inch coins', sub:'Any cooked sausage; kielbasa or andouille both work.' },
+    { id:'potatoes', q:10, u:'oz', g:283, role:'carb', core:true, note:'¾-inch cubes, skin on' },
+    { id:'peppers', q:1.5, u:'cup', g:165, role:'veg', core:true, note:'peppers and onion, thick slices' },
+    { id:'oliveoil', q:1, u:'tbsp', g:13.5, role:'other' },
+    { id:'garlicpowder', q:0.5, u:'tsp', g:1.5, role:'other', group:'Seasoning' },
+    { id:'smokedpaprika', q:0.5, u:'tsp', g:1.2, role:'other', group:'Seasoning', any:['smokedpaprika','paprika'] },
+    { id:'salt', q:0.125, u:'tsp', g:0.75, role:'other', group:'Seasoning', note:'sausage is already salty' },
+    { id:'pepper', q:0.25, u:'tsp', g:0.6, role:'other', group:'Seasoning' },
+  ],
+  heat:{ medium:[{ id:'chiliflakes', q:0.25, u:'tsp', g:0.5 }], hot:[{ id:'hotsauce', q:1, u:'tsp', g:5, note:'at the table' }] },
+  heatText:' Add {q:chiliflakes} red pepper flakes to the seasoning.',
+  tiers:{
+    base:{ text:'Sausage, potatoes, peppers and onions.' },
+    better:{ text:'Grainy mustard or BBQ sauce for dipping, and green onion.', finish:'A spoon of mustard or BBQ sauce on the side, green onion over the top.',
+      add:[{ id:'bbq', q:1, u:'tbsp', g:17, note:'for dipping' },{ id:'greenonion', q:1, u:'tbsp', g:6 }] },
+    loaded:{ text:'Everything in Better, plus melted cheese and a yogurt-BBQ drizzle.', finish:'Cheese over the hot pan for a minute, then the yogurt-BBQ drizzle.',
+      add:[{ id:'cheese', q:0.25, u:'cup', g:28 },{ id:'yogurt', q:2, u:'tbsp', g:30, note:'stirred with a little BBQ sauce' }] },
+  },
+  equipment:['Sheet pan','Parchment or foil','Cutting board and knife','Large bowl for tossing'],
+  mise:['Sausage','Potatoes','Peppers and onion','Olive oil','Garlic powder, smoked paprika, salt, pepper'],
+  steps:[
+    { key:'oven', title:'Heat the oven to 425°F', hands:2, passive:12,
+      text:'Rack in the middle. Line a sheet pan with parchment or foil — it saves the scrubbing later.' },
+    { title:'Cut and season the potatoes', prep:true, hands:5,
+      text:'Cut {q:potatoes} potatoes into ¾-inch cubes. Toss them in the bowl with half the oil ({q:oliveoil} total) and half the {q:garlicpowder} garlic powder, {q:smokedpaprika} smoked paprika, {q:salt} salt and {q:pepper} pepper.{heat}' },
+    { waitFor:'oven', key:'roast1', title:'Potatoes in first', hands:2, passive:15, timer:15,
+      text:'Spread the potatoes on the hot pan in one layer, cut sides down, and roast 15 minutes. They get a head start because they take the longest.',
+      warn:'Crowding steams them. Use the whole pan, or two.' },
+    { title:'Cut the sausage and peppers', prep:true, hands:4,
+      text:'Cut {q:sausage} sausage into ½-inch coins and {q:peppers} peppers and onion into thick slices. Toss them with the rest of the oil and seasoning.' },
+    { waitFor:'roast1', key:'roast2', title:'Everything else on the pan', hands:2, passive:14, timer:14,
+      text:'Pull the pan out, push the potatoes to one side, and add the sausage and peppers. Give it a quick toss and roast 12–15 minutes more.' },
+    { waitFor:'roast2', title:'Check and finish', hands:2,
+      text:'Potatoes should pierce easily with a fork and the sausage should be browned at the edges. Not there yet? 5 more minutes.',
+      safety:'Most chicken sausage is sold fully cooked, so this is about browning. If yours is raw, it needs 165°F inside.' },
+    { title:'Serve', hands:1, finish:true,
+      text:'Straight from the pan.{tierFinish}' },
+  ],
+  finish:'Eat it off the pan or tip it into a bowl. The charred pepper edges are the best part.',
+  subs:['The sausage is where the salt is. Two links plus a fried egg keeps it lighter.','Any sausage works: kielbasa, andouille, Italian.','Sweet potatoes instead of regular: same time.','No peppers: broccoli added with the sausage, or frozen green beans.'],
+  leftovers:{
+    separate:['Everything goes in one container.','Dips and cheese go on after reheating.'],
+    storage:['Into the fridge within 2 hours. Fridge: 3–4 days.','Freezer: up to 2 months, though the potatoes soften.'],
+    reheat:['Best in a hot dry skillet, 4–5 minutes, so the edges crisp again. Air fryer: 400°F for 5 minutes.','Microwave works: 2 minutes, stir, then 1 minute more until steaming (165°F). It comes out soft rather than crisp.'],
+    fresh:['A fried egg on top turns it into breakfast for dinner.','Mustard, hot sauce or a squeeze of lemon.'],
+  },
+},
+{
+  id:'chili', type:'dinner', name:'Beef Chili', short:'Chili',
+  flavor:'A pot of beef, beans and tomatoes that gets better for days and freezes perfectly. Your takeout insurance.',
+  difficulty:'Easy', protein:'beef', defaultServings:4, carbs:['none','rice','hash'], defaultCarb:'none', tags:['batch','freezer','better on day two'],
+  bowl:[['chili',0.72],['corn',0.28]], garnish:'yogurt',
+  ingredients:[
+    { id:'beef', q:6, u:'oz', g:170, role:'protein', core:true, any:['beef','p_beef'], note:'raw · about {cooked} cooked' },
+    { if:'rice', id:'rice', name:'Jasmine rice', q:1, u:'cup', g:158, role:'carb', any:['rice','p_rice','ricepouch'], note:'cooked · {dry} dry' },
+    { if:'hash', id:'hashbrowns', q:1.5, u:'cup', g:140, role:'carb', note:'frozen shredded, crisped' },
+    { if:'hash', id:'oliveoil', key:'oilHash', q:1, u:'tsp', g:4.5, role:'other', note:'for crisping' },
+    { id:'tomatoes', q:1, u:'cup', g:240, role:'veg', core:true, note:'canned diced, with the juice' },
+    { id:'blackbeans', q:0.5, u:'cup', g:86, role:'veg', core:true, note:'rinsed' },
+    { id:'corn', q:0.333, u:'cup', g:55, role:'veg' },
+    { id:'peppers', q:0.5, u:'cup', g:55, role:'veg', note:'peppers and onion, diced' },
+    { id:'oliveoil', q:1, u:'tsp', g:4.5, role:'other' },
+    { id:'chilipowder', q:1.5, u:'tsp', g:4, role:'other', group:'Seasoning', core:true },
+    { id:'cumin', q:1, u:'tsp', g:2, role:'other', group:'Seasoning' },
+    { id:'smokedpaprika', q:0.5, u:'tsp', g:1.2, role:'other', group:'Seasoning', any:['smokedpaprika','paprika'] },
+    { id:'garlicpowder', q:0.5, u:'tsp', g:1.5, role:'other', group:'Seasoning' },
+    { id:'salt', q:0.25, u:'tsp', g:1.5, role:'other', group:'Seasoning' },
+  ],
+  heat:{ medium:[{ id:'chiliflakes', q:0.25, u:'tsp', g:0.5 }], hot:[{ id:'hotsauce', q:1, u:'tsp', g:5, note:'at the table' }] },
+  heatText:' Add {q:chiliflakes} red pepper flakes with the spices.',
+  tiers:{
+    base:{ text:'Chili on its own, or over rice or crispy hash browns.' },
+    better:{ text:'Greek yogurt and green onion on top.', finish:'A spoon of Greek yogurt and green onion over each bowl.',
+      add:[{ id:'yogurt', q:2, u:'tbsp', g:30 },{ id:'greenonion', q:1, u:'tbsp', g:6 }] },
+    loaded:{ text:'Everything in Better, plus cheese and a squeeze of lime.', finish:'Cheese into the hot chili so it melts, then lime over the top.',
+      add:[{ id:'cheese', q:0.25, u:'cup', g:28 },{ id:'lime', q:1, u:'wedge', g:5 }] },
+  },
+  equipment:['Large pot or deep skillet','Wooden spoon','Can opener','Colander for the beans'],
+  mise:['Beef','Canned tomatoes','Black beans','Corn','Peppers and onion','Chili powder, cumin, smoked paprika, garlic powder, salt'],
+  steps:[
+    Object.assign({}, RICE_STEP, { if:'rice&fresh' }),
+    { if:'hash', key:'potcrisp', title:'Crisp the hash browns', hands:2, passive:9, timer:9,
+      text:'Heat {q:oilHash} oil in a skillet over medium-high. Spread {q:hashbrowns} hash browns flat, press down, and leave them 4–5 minutes until golden. Flip in sections, 3–4 minutes more. Set them aside.',
+      warn:'Don’t stir them. Pressing and waiting is what makes them crisp.' },
+    { key:'beef', title:'Brown the beef with the vegetables', hands:3, passive:7, timer:7,
+      text:'Heat {q:oliveoil} oil in the pot over medium-high. Add {q:beef} beef and {q:peppers} diced peppers and onion. Press flat, leave it 2 minutes, then break it up and cook until no pink remains, 7–8 minutes.',
+      safety:BEEF_SAFETY },
+    { waitFor:'beef', title:'Bloom the spices', hands:1,
+      text:'Stir in {q:chilipowder} chili powder, {q:cumin} cumin, {q:smokedpaprika} smoked paprika, {q:garlicpowder} garlic powder and {q:salt} salt.{heat} Cook 30–60 seconds, until it smells like chili.',
+      warn:'This 30 seconds in the hot fat is the difference between chili and beef in tomato sauce.' },
+    { title:'Add everything else', prep:true, hands:2,
+      text:'Rinse {q:blackbeans} black beans. Add them with {q:tomatoes} canned tomatoes and their juice and {q:corn} corn. Scrape the brown bits off the bottom.' },
+    { key:'simmer', title:'Simmer', hands:1, passive:22, timer:22,
+      text:'Bring it to a bubble, turn it to low and leave it 20–25 minutes, stirring once or twice. Too thick? A splash of water. Too thin? Leave the lid off.' },
+    { waitFor:'simmer', title:'Taste it', hands:1,
+      text:'Now season properly: more salt almost always, and a pinch more chili powder if it tastes flat.' },
+    Object.assign({}, WARM_RICE_STEP, { if:'rice&ready' }),
+    { waitAll:true, title:'Serve', hands:2, finish:true,
+      text:'{chiliBase}{tierFinish}' },
+  ],
+  finish:'Serve it in a deep bowl, on rice, or over crispy hash browns with the toppings on top.',
+  subs:['Ground turkey works; add an extra ½ tsp chili powder.','No canned tomatoes: a cup of marinara and a splash of water.','Kidney or pinto beans instead of black beans.'],
+  leftovers:{
+    separate:['Chili keeps perfectly on its own.','Yogurt, cheese, green onion and hash browns all go on fresh.'],
+    storage:['Cool it in shallow containers and refrigerate within 2 hours.','Fridge: 3–4 days, and it genuinely tastes better on day two.','Freezer: up to 3 months. Freeze it flat in bags and it thaws in minutes.'],
+    reheat:['Microwave 2 minutes, stir, then 1–2 minutes more until steaming (165°F). Add a splash of water if it has thickened.','From frozen: thaw overnight in the fridge, or microwave at 50% power for 5 minutes, stirring twice.'],
+    fresh:['Fresh yogurt and green onion, always.','Crisp a handful of hash browns underneath and it feels like a different meal.'],
   },
 },
 
@@ -1320,7 +1665,7 @@ const RECIPES = [
   prepNotes:{ temp:'No oven', lining:'Loaf pan or shallow container if you want it scoopable', tools:['High-powered blender or food processor','Measuring spoons','Tamper or spatula','Freezer'] },
   ahead:'Freeze the bananas first: peel ripe bananas, slice into ½-inch coins, and freeze flat on parchment for at least 6 hours. Whole frozen bananas are hard on blenders.',
   ingredients:[
-    { id:'bananas', q:1, u:'banana', g:120, core:true, note:'large, sliced and frozen' },
+    { id:'bananas', q:1, u:'banana', g:120, core:true, any:['p_bananas','bananas'], note:'large, sliced and frozen solid', sub:'Fresh bananas need 6 hours in the freezer first — slice them tonight.' },
     { id:'yogurt', q:0.333, u:'cup', g:80, core:true },
     { id:'milk', q:2, u:'tbsp', g:30, core:true, note:'exactly — add more only if the blender stalls' },
     { id:'protein', q:0.5, u:'scoop', g:15, note:'no more than ½ scoop per banana' },
@@ -1428,6 +1773,56 @@ const QUICK = [
       { id:'broccoli', q:1, u:'cup', g:90, opt:true },
     ],
     steps:['Heat the rice.','Whisk 3 eggs with a pinch of salt. Cook in a nonstick pan over medium-low, stirring slowly, 2–3 minutes until softly set with no liquid left.','Eggs over rice, then soy sauce, sesame oil and green onion.'] },
+  { id:'q-beans', name:'Black bean and salsa bowl', time:5, note:'Nothing cooked ahead, nothing fresh required.',
+    ing:[
+      { id:'blackbeans', q:1, u:'cup', g:172, core:true, note:'rinsed' },
+      { id:'ricepouch', name:'Rice pouch or cooked rice', q:1.5, u:'cup', g:237, core:true, any:['ricepouch','p_rice','rice'] },
+      { id:'salsa', q:3, u:'tbsp', g:48, core:true },
+      { id:'cheese', q:0.25, u:'cup', g:28 },
+      { id:'yogurt', q:2, u:'tbsp', g:30, opt:true },
+      { id:'corn', q:0.5, u:'cup', g:82, opt:true },
+    ],
+    steps:['Microwave the rice pouch, 90 seconds.','Rinse the beans and microwave them with the corn, covered, 2 minutes.','Beans over rice, then salsa, cheese and a spoon of yogurt.'] },
+  { id:'q-dumplings', name:'Dumplings and frozen vegetables', time:8,
+    ing:[
+      { id:'dumplings', name:'Frozen dumplings', q:8, u:'dumpling', g:200, core:true },
+      { id:'broccoli', q:1.5, u:'cup', g:135, core:true, note:'frozen' },
+      { id:'soy', q:1, u:'tbsp', g:16, core:true },
+      { id:'sesameoil', q:0.5, u:'tsp', g:2.3, opt:true },
+      { id:'chilisauce', q:1, u:'tsp', g:6, opt:true },
+      { id:'greenonion', q:1, u:'tbsp', g:6, opt:true },
+    ],
+    steps:['Pan method: dumplings flat side down in a little oil, 2 minutes, then add ¼ cup water, cover and steam 5 minutes.','Microwave the frozen broccoli, covered, 4 minutes.','Soy sauce, sesame oil and chili sauce for dipping.'] },
+  { id:'q-quesadilla', name:'Cheese and bean quesadilla', time:6,
+    ing:[
+      { id:'tortillas', q:2, u:'tortilla', g:100, core:true },
+      { id:'cheese', q:0.5, u:'cup', g:56, core:true },
+      { id:'blackbeans', q:0.5, u:'cup', g:86, core:true, note:'rinsed' },
+      { id:'p_chicken', name:'Cooked chicken', q:0.5, u:'cup', g:70, opt:true, any:['p_chicken','rotisserie'] },
+      { id:'salsa', q:2, u:'tbsp', g:32, opt:true },
+      { id:'yogurt', q:2, u:'tbsp', g:30, opt:true },
+    ],
+    steps:['Dry skillet over medium. Tortilla down, cheese and beans on half, fold it over.','2–3 minutes a side, until the outside is spotted brown and the cheese has melted.','Cut into wedges. Salsa and yogurt to dip.'] },
+  { id:'q-sausage', name:'Sausage and hash browns', time:10,
+    ing:[
+      { id:'sausage', q:2, u:'link', g:170, core:true, note:'sliced into coins' },
+      { id:'hashbrowns', q:1.5, u:'cup', g:140, core:true, note:'frozen' },
+      { id:'oliveoil', q:1, u:'tsp', g:4.5 },
+      { id:'eggs', q:1, u:'egg', g:50, opt:true, note:'fried, on top' },
+      { id:'bbq', q:1, u:'tbsp', g:17, opt:true },
+    ],
+    steps:['Oil in a skillet over medium-high. Hash browns spread flat, pressed down, 4–5 minutes until golden.','Flip in sections, add the sausage coins, and give it 4 minutes more.','Fry an egg on top if you want it. BBQ sauce or hot sauce to finish.'] },
+  { id:'q-tuna', name:'Tuna rice bowl', time:4,
+    ing:[
+      { id:'tuna', q:1, u:'pouch', g:110, core:true },
+      { id:'ricepouch', name:'Rice pouch or cooked rice', q:1.5, u:'cup', g:237, core:true, any:['ricepouch','p_rice','rice'] },
+      { id:'soy', q:2, u:'tsp', g:11, core:true },
+      { id:'sesameoil', q:0.5, u:'tsp', g:2.3, opt:true },
+      { id:'yogurt', q:2, u:'tbsp', g:30, opt:true, note:'stirred with a little hot sauce' },
+      { id:'greenonion', q:1, u:'tbsp', g:6, opt:true },
+      { id:'cucumber', q:0.5, u:'cup', g:70, opt:true },
+    ],
+    steps:['Heat the rice, 90 seconds.','Tuna straight on top, then soy sauce and sesame oil.','Spicy yogurt, green onion and cucumber if you have them.'] },
   { id:'q-yogurt', name:'Greek yogurt bowl', time:2, note:'Lighter than dinner, still about 30 g protein.',
     ing:[
       { id:'yogurt', q:1, u:'cup', g:240, core:true },
@@ -1470,7 +1865,7 @@ function defaultState() {
     v: 2,
     onboarded: false,
     prefs: { portion:'standard', protein:'any', carb:'rice', heat:'mild', dessert:'any', theme:'system',
-             autoRecommend:true, nutritionProminent:true, trackInventory:true, defaultMeal:'korean', chickenCut:'breast' },
+             autoRecommend:true, nutritionProminent:false, trackInventory:true, defaultMeal:'korean', chickenCut:'breast' },
     inv: {},
     invDates: {},
     shopping: [],
@@ -1485,9 +1880,10 @@ function defaultState() {
     containers: [],
     history: [],
     notes: {},
+    timer: null,
     weekPlan: { start:0, counts:{} },
     lastBackup: 0,
-    ui: { prepTab:'dinners', invTab:'kitchen', invFilter:'all', rtabs:{} },
+    ui: { prepTab:'dinners', invTab:'kitchen', invFilter:'all', invSearch:'', rtabs:{} },
   };
 }
 
@@ -1507,9 +1903,12 @@ function loadState() {
   Object.keys(out.ui.rtabs).forEach(k => { if (typeof out.ui.rtabs[k] !== 'string') delete out.ui.rtabs[k]; });
   if (!['all','low','out'].includes(out.ui.invFilter)) out.ui.invFilter = 'all';
   if (!['kitchen','shopping'].includes(out.ui.invTab)) out.ui.invTab = 'kitchen';
+  if (typeof out.ui.invSearch !== 'string') out.ui.invSearch = '';
   if (!isObj(out.notes)) out.notes = {};
   Object.keys(out.notes).forEach(k => { if (!RECIPE[k] || typeof out.notes[k] !== 'string') delete out.notes[k]; });
   if (!isObj(out.weekPlan) || !isObj(out.weekPlan.counts) || typeof out.weekPlan.start !== 'number') out.weekPlan = { start:0, counts:{} };
+  if (!isObj(out.weekPlan.last)) out.weekPlan.last = {};
+  if (out.timer && (!isObj(out.timer) || typeof out.timer.end !== 'number')) out.timer = null;
   if (typeof out.lastBackup !== 'number' || !isFinite(out.lastBackup)) out.lastBackup = 0;
   out.shopSources = Object.assign(fresh.shopSources, isObj(s.shopSources) ? s.shopSources : {});
   ['inv','invDates','opts','checks'].forEach(k => { if (!isObj(out[k])) out[k] = {}; });
@@ -1636,7 +2035,7 @@ function getOpts(r) {
   const o = Object.assign({}, saved);
   if (!['base','better','loaded'].includes(o.tier)) o.tier = 'base';
   if (r.type === 'dinner') {
-    o.servings = SERVING_OPTS.includes(+o.servings) ? +o.servings : 1;
+    o.servings = SERVING_OPTS.includes(+o.servings) ? +o.servings : (r.defaultServings || 1);
     o.mode = o.mode === 'amount' ? 'amount' : 'servings';
     o.amountUnit = o.amountUnit === 'oz' ? 'oz' : 'lb';
     const prot = r.ingredients.find(i => i.role === 'protein');
@@ -1644,7 +2043,8 @@ function getOpts(r) {
     o.plates = Number.isInteger(+o.plates) && +o.plates >= 1 && +o.plates <= 6 ? +o.plates : null;
     o.cut = r.hasCut ? (['breast','thigh'].includes(o.cut) ? o.cut : chickenCut()) : 'breast';
     if (o.mode === 'amount' && o.amountDate !== dayKey()) { o.mode = 'servings'; o.plates = null; }
-    o.carb = r.hasCarbChoice ? (['rice','potato'].includes(o.carb) ? o.carb : (S.prefs.carb === 'potato' ? 'potato' : 'rice')) : 'rice';
+    const carbs = r.carbs || ['rice'];
+    o.carb = carbs.includes(o.carb) ? o.carb : (r.defaultCarb || (carbs.includes(S.prefs.carb) ? S.prefs.carb : carbs[0]));
     if (!['fresh','ready'].includes(o.rice)) o.rice = S.prefs.trackInventory && ['in','low'].includes(S.inv.p_rice) ? 'ready' : 'fresh';
     if (r.hasSauceChoice && !['regular','smoky','spicy'].includes(o.sauce)) o.sauce = S.prefs.heat === 'mild' ? 'regular' : 'spicy';
   } else {
@@ -1670,6 +2070,8 @@ function cond(expr, c) {
     if (t === 'ready') return c.carb === 'rice' && c.rice === 'ready';
     if (t === 'rice') return c.carb === 'rice';
     if (t === 'potato') return c.carb === 'potato';
+    if (t === 'hash') return c.carb === 'hash';
+    if (t === 'nocarb') return c.carb === 'none';
     if (t === 'loaded') return c.tier === 'loaded';
     if (t === 'better') return c.tier !== 'base';
     if (t === 'glazed') return !!(c.g && c.g.id !== 'none');
@@ -1767,7 +2169,8 @@ function nutrition(c) {
   c.ings.forEach(i => {
     const n = NUT[i.nutId || i.id];
     if (!n) return;
-    for (let k = 0; k < t.length; k++) t[k] += n[k] * i.sg / 100;
+    const f = i.nutFactor == null ? 1 : i.nutFactor; // e.g. pasta-water salt, most of which drains
+    for (let k = 0; k < t.length; k++) t[k] += n[k] * i.sg * f / 100;
   });
   const out = {};
   NUT_KEYS.forEach((k, idx) => { out[k] = t[idx] / (c.pieces || 1); });
@@ -1810,7 +2213,8 @@ function fill(text, c) {
           return s;
         }
         case 'sauceStyle': return c.sauce === 'smoky' ? ' and {q:smokyBoost} extra smoked paprika' : c.sauce === 'spicy' ? ' and {q:hotsauce} hot sauce' : '';
-        case 'carbName': return c.carb === 'potato' ? 'Crispy potatoes' : 'Rice';
+        case 'carbName': return c.carb === 'potato' ? 'Crispy potatoes' : c.carb === 'hash' ? 'Crispy hash browns' : 'Rice';
+        case 'chiliBase': return c.carb === 'rice' ? 'Rice in the bowl first, then the chili over it. ' : c.carb === 'hash' ? 'Hash browns in the bowl, chili spooned over them so they stay crisp at the edges. ' : 'Chili straight into a deep bowl. ';
         case 'mix': return (c.v && c.v.mix) || 'No mix-ins for this version — move on.';
         case 'fill': return (c.v && c.v.fill) || '';
         case 'blend': return (c.v && c.v.blend) || '';
@@ -2001,7 +2405,11 @@ function readyLabel(rd) {
   if (!S.prefs.trackInventory) return { cls:'', text:'' };
   const names = list => list.length <= 2 ? list.map(i => lcName(i)).join(' and ') : list.length + ' items';
   if (rd.level === 'ready') return { cls:'ok', text: rd.low.length ? 'Ready · low on ' + names(rd.low) : 'Ready to make' };
-  if (rd.level === 'almost') return { cls:'warn', text:'Missing ' + names(rd.missing) };
+  if (rd.level === 'almost') {
+    const skippable = rd.missing.every(i => i.sub || i.opt);
+    if (skippable) return { cls:'ok', text:'Ready — ' + names(rd.missing) + (rd.missing.length > 1 ? ' are' : ' is') + ' skippable' };
+    return { cls:'warn', text:'Missing ' + names(rd.missing) };
+  }
   return { cls:'bad', text:'Missing ' + names(rd.missingCore.concat(rd.missing)) };
 }
 const SHORT_NAMES = { beef:'Ground beef', chicken:'Chicken', rice:'Rice', ricepouch:'Rice pouches', potatoes:'Potatoes', oats:'Oat flour', broccoli:'Broccoli',
@@ -2037,6 +2445,22 @@ function quickIngs(q) {
 function quickContext(q) {
   return { ings: quickIngs(q).filter(i => !i.opt || avail(i).st !== 'out').map(i => Object.assign({}, i, { sq:i.q, sg:i.g })), pieces:1 };
 }
+
+// Fresh things a cook just used: what's worth updating in the kitchen afterwards.
+function usedItems(c) {
+  const seen = new Set(), out = [];
+  c.ings.forEach(i => {
+    if (i.opt || (i.extra === 'Heat' && c.heat === 'mild')) return;
+    const a = avail(i);
+    const id = a.st !== 'out' ? a.via : altIds(i)[0];
+    const it = ITEM[id];
+    if (seen.has(id) || !it || it.staple) return;
+    seen.add(id);
+    out.push(id);
+  });
+  return out;
+}
+function freshUsed(c) { return usedItems(c).filter(id => ITEM[id].fresh && inv(id) === 'in'); }
 
 /* ---------- Tonight ---------- */
 const isFav = id => S.favorites.includes(id);
@@ -2104,10 +2528,22 @@ function weekStart(t = Date.now()) {
   d.setDate(d.getDate() - back);
   return d.getTime();
 }
-function weekCounts() { return S.weekPlan && S.weekPlan.start === weekStart() ? S.weekPlan.counts : {}; }
+function weekCounts() {
+  if (!S.weekPlan || S.weekPlan.start === weekStart()) return (S.weekPlan && S.weekPlan.counts) || {};
+  // a new week: keep what was planned last week so it can be reused in one tap
+  const last = sum(Object.values(S.weekPlan.counts || {})) ? S.weekPlan.counts : S.weekPlan.last;
+  S.weekPlan = { start: weekStart(), counts:{}, last: last || {} };
+  save();
+  return S.weekPlan.counts;
+}
+function lastWeekCounts() { weekCounts(); return (S.weekPlan && S.weekPlan.last) || {}; }
 function setWeekCount(id, n) {
   const counts = Object.assign({}, weekCounts(), { [id]: clamp(n, 0, 7) });
-  S.weekPlan = { start: weekStart(), counts };
+  S.weekPlan = Object.assign({}, S.weekPlan, { start: weekStart(), counts });
+  save();
+}
+function setWeekCounts(counts) {
+  S.weekPlan = Object.assign({}, S.weekPlan, { start: weekStart(), counts: Object.assign({}, counts) });
   save();
 }
 function cookedThisWeek(rid) {
@@ -2149,20 +2585,21 @@ function containerContents(r) {
 
 /* ---------- Prep plan ---------- */
 function prepCount() { const d = S.prep.days; return d === 'custom' ? clamp(+S.prep.custom || 1, 1, 14) : clamp(+d || 4, 1, 14); }
+const PREP_DINNERS = () => DINNERS.filter(r => r.prepable);
 function autoSplit(n) {
-  const order = [...DINNERS].sort((a, b) => (isFav(b.id) ? 1 : 0) - (isFav(a.id) ? 1 : 0));
-  const sp = {}; DINNERS.forEach(r => { sp[r.id] = 0; });
+  const order = [...PREP_DINNERS()].sort((a, b) => (isFav(b.id) ? 1 : 0) - (isFav(a.id) ? 1 : 0));
+  const sp = {}; PREP_DINNERS().forEach(r => { sp[r.id] = 0; });
   for (let i = 0; i < n; i++) sp[order[i % order.length].id]++;
   return sp;
 }
 function prepSplit() {
   const n = prepCount();
   const sp = S.prep.split;
-  if (isObj(sp) && DINNERS.every(r => Number.isInteger(sp[r.id]) && sp[r.id] >= 0) && sum(DINNERS.map(r => sp[r.id])) === n) return sp;
+  if (isObj(sp) && PREP_DINNERS().every(r => Number.isInteger(sp[r.id]) && sp[r.id] >= 0) && sum(PREP_DINNERS().map(r => sp[r.id])) === n) return sp;
   return autoSplit(n);
 }
 function planBuilds(split) {
-  return DINNERS.filter(r => split[r.id] > 0).map(r => build(r, { servings: split[r.id], tier:'base', rice:'fresh' }));
+  return PREP_DINNERS().filter(r => split[r.id] > 0).map(r => build(r, { servings: split[r.id], tier:'base', rice:'fresh' }));
 }
 
 function aggregate(builds) {
@@ -2386,6 +2823,8 @@ const ICON = {
   sweet:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3"/><path d="M4.8 10.2c1.8.8 2.6-.9 4.3 0M14.8 8.6c1.4.9 2.4-.6 4 .6"/></svg>',
   prep:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="9" width="16" height="10" rx="2"/><path d="M3 9h18M8.5 5.5h7M12 12.5v3"/></svg>',
   inventory:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 6.5h10M10 12h10M10 17.5h10"/><path d="M3.8 6.4l1.3 1.3 2.2-2.4M3.8 11.9l1.3 1.3 2.2-2.4"/><circle cx="5.5" cy="17.5" r="1.2"/></svg>',
+  cart:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2.2l2.3 10.5a2 2 0 0 0 2 1.6h7.6a2 2 0 0 0 2-1.5L21 8H6.2"/><circle cx="10" cy="19.5" r="1.4"/><circle cx="17" cy="19.5" r="1.4"/></svg>',
+  clock:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>',
   gear:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg>',
   back:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>',
   star:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/></svg>',
@@ -2393,12 +2832,13 @@ const ICON = {
   close:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
 };
 
+const CARB_LABEL = { rice:'Rice', potato:'Potatoes', hash:'Hash browns', none:'On its own' };
 const SHORT = { korean:'Korean', mexican:'Mexican', med:'Mediterranean', bbq:'BBQ', bread:'Banana bread', brownies:'Brownies', donuts:'Donuts', icecream:'Ice cream' };
 
 /* ---------- Illustrations: bowls and dessert glyphs ---------- */
-const FOODVAR = { rice:'--f-rice', beef:'--f-beef', chicken:'--f-chicken', broccoli:'--f-broc', lettuce:'--f-leaf', beans:'--f-bean', corn:'--f-corn', spinach:'--f-spinach', cucumber:'--f-cuc', tomato:'--f-tomato', potato:'--f-potato' };
+const FOODVAR = { rice:'--f-rice', beef:'--f-beef', chicken:'--f-chicken', broccoli:'--f-broc', lettuce:'--f-leaf', beans:'--f-bean', corn:'--f-corn', spinach:'--f-spinach', cucumber:'--f-cuc', tomato:'--f-tomato', potato:'--f-potato', pasta:'--f-pasta', sauce:'--f-sauce', sausage:'--f-sausage', egg:'--f-egg', hash:'--f-hash', chili:'--f-chili', peppers:'--f-peppers' };
 function bowlSVG(r, size, carb) {
-  const segs = r.bowl.map(([k, v]) => [k === 'rice' && carb === 'potato' ? 'potato' : k, v]);
+  const segs = r.bowl.map(([k, v]) => [k === 'rice' && (carb === 'potato' || carb === 'hash') ? (carb === 'hash' ? 'hash' : 'potato') : k, v]);
   const cx = 50, cy = 50, R = 39;
   let a = -Math.PI / 2 - segs[0][1] * Math.PI;
   const paths = segs.map(([k, v]) => {
@@ -2414,6 +2854,8 @@ function bowlSVG(r, size, carb) {
   if (r.garnish === 'salsa') garnish = dots.slice(0, 5).map(([x, y]) => `<circle cx="${x}" cy="${y}" r="2.2" fill="var(--f-tomato)"/>`).join('');
   if (r.garnish === 'yogurt') garnish = '<path d="M38 50c4-8 18-8 22 0s-10 10-14 4 4-9 8-5" fill="none" stroke="var(--f-yogurt)" stroke-width="3.2" stroke-linecap="round"/>';
   if (r.garnish === 'bbq') garnish = '<path d="M34 46l7 6 7-7 7 7 7-6 5 4" fill="none" stroke="var(--f-bbq)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>';
+  if (r.garnish === 'sesame') garnish = dots.map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="2" ry="1.3" fill="var(--f-sesame)"/>`).join('');
+  if (r.garnish === 'parmesan') garnish = dots.map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.7" fill="var(--f-parm)"/>`).join('');
   const label = r.name + ' illustration';
   return `<svg class="bowl" width="${size}" height="${size}" viewBox="0 0 100 100" role="img" aria-label="${esc(label)}"><circle cx="50" cy="50" r="48" fill="var(--bowl)" stroke="var(--line)" stroke-width="1"/>${paths}<circle cx="50" cy="50" r="${R}" fill="none" stroke="var(--bowl-rim)" stroke-width="1"/>${garnish}</svg>`;
 }
@@ -2508,7 +2950,8 @@ function ingredientList(c, rid, prefix = '') {
     const note = i.note ? fill(i.note, c) : '';
     const tag = i.extra && !['Heat','Glaze'].includes(i.extra) ? `<span class="tag">${esc(i.extra)}</span>` : '';
     return `<li class="ing"><input type="checkbox" id="${id}" data-a="check" data-rid="${rid}" data-key="${esc(i.key + (i.extra || ''))}" ${checks[i.key + (i.extra || '')] ? 'checked' : ''}>
-      <label for="${id}"><span class="ing-name">${esc(i.name || itemName(i.id))}${tag}</span>${note ? `<span class="ing-note">${esc(note)}</span>` : ''}${stockBadge(a.st, a.via, (i.any || [i.id])[0])}</label>
+      <label for="${id}"><span class="ing-name">${esc(i.name || itemName(i.id))}${tag}</span>${note ? `<span class="ing-note">${esc(note)}</span>` : ''}</label>
+      ${a.st === 'out' && i.sub ? `<details class="swap" data-d="swap-${rid}-${i.key}"><summary><span class="stock out"><i aria-hidden="true">○</i> Need to buy · swap</span></summary><p class="swap-text">${esc(i.sub)}</p></details>` : `<span class="ing-stock">${stockBadge(a.st, a.via, (i.any || [i.id])[0])}</span>`}
       <span class="ing-amt mono">${esc(fmtQ(i.sq, i.u))}</span></li>`;
   }).join('')}</ul></div>`).join('');
 }
@@ -2536,10 +2979,7 @@ function viewTonight() {
     const cr = RECIPE[S.cook.rid];
     banners += `<button type="button" class="banner" data-a="resume"><span><strong>Resume ${esc(cr.short)}</strong><span class="muted"> · ${S.cook.i ? 'step ' + S.cook.i : 'not started yet'}</span></span>${ICON.chev}</button>`;
   }
-  if (good.length) {
-    const names = [...new Set(good.map(ct => RECIPE[ct.rid].short))].join(', ');
-    banners += `<a class="banner ready" href="#/nocook"><span><strong>${good.length} prepped ${good.length > 1 ? 'dinners' : 'dinner'} ready</strong><span class="muted"> · ${esc(names)} · heat one in 3 min</span></span>${ICON.chev}</a>`;
-  } else if (frozen.length) {
+  if (!good.length && frozen.length) {
     banners += `<a class="banner" href="#/prep/portion"><span><strong>${frozen.length} in the freezer</strong><span class="muted"> · move one to the fridge tonight for tomorrow</span></span>${ICON.chev}</a>`;
   }
   const desserts = [...DESSERTS].sort((a, b) => (S.prefs.dessert === b.id) - (S.prefs.dessert === a.id) || isFav(b.id) - isFav(a.id));
@@ -2563,7 +3003,7 @@ function viewTonight() {
   const words = { in:'stocked', low:'low', out:'missing' };
   const kitchen = S.prefs.trackInventory ? `<ul class="kcheck">${checkRows.map(([n, st, prepped]) =>
     `<li><span class="kc-name">${esc(n)}</span><span class="stock ${st}"><i aria-hidden="true">${st === 'in' ? '●' : st === 'low' ? '◐' : '○'}</i> ${prepped && st !== 'out' ? 'prepped' : words[st]}</span></li>`).join('')}</ul>
-    <a class="link-row" href="#/inventory">Inventory ${ICON.chev}</a>` : `<p class="muted">Inventory tracking is off. Turn it on in <a href="#/settings">Settings</a>.</p>`;
+    <a class="link-row" href="#/kitchen">Kitchen ${ICON.chev}</a>` : `<p class="muted">Inventory tracking is off. Turn it on in <a href="#/settings">Settings</a>.</p>`;
 
   const wk = weekSummary();
   const weekRow = wk.home || wk.prepared || wk.desserts
@@ -2572,23 +3012,36 @@ function viewTonight() {
 
   const rd = bestReadiness(r);
   const rl = readyLabel(rd);
-  return `
-  <header class="top">
-    <p class="eyebrow">${now.toLocaleDateString(undefined, { weekday:'long', month:'long', day:'numeric' })}</p>
-    <a class="icon-btn" href="#/settings" aria-label="Settings">${ICON.gear}</a>
-  </header>
-  ${banners ? `<div class="banners">${banners}</div>` : ''}
-  <h1 class="display">What are we eating tonight?</h1>
-  <article class="hero" aria-labelledby="hero-name">
+
+  // Something already cooked beats cooking again: make it the hero.
+  const first = good.slice().sort((a, b) => eatBy(a) - eatBy(b))[0];
+  const fr = first ? RECIPE[first.rid] : null;
+  const heroFridge = !first ? '' : `<article class="hero fridge" aria-labelledby="hero-name">
+    <div class="hero-top">${bowlSVG(fr, 92)}
+      <div class="hero-title">
+        <p class="kicker">In the fridge · ${good.length > 1 ? good.length + ' containers' : '1 container'}</p>
+        <h2 id="hero-name" class="hero-name">${esc(fr.name)}</h2>
+        <p class="ready-line ok">Eat by ${fmtDay(eatBy(first))} · 3–4 min in the microwave</p>
+      </div>
+    </div>
+    <div class="hero-actions">
+      <button type="button" class="btn primary xl" data-a="heat-go" data-id="${first.uid}">Heat it · 3 min</button>
+      <div class="pair">
+        <button type="button" class="btn" data-a="start-cook" data-id="${r.id}">Cook ${esc(r.short)} instead</button>
+        <a class="btn" href="#/nocook">Something else</a>
+      </div>
+    </div>
+  </article>`;
+  const heroCook = `<article class="hero" aria-labelledby="${first ? 'cook-name' : 'hero-name'}">
     <div class="hero-top">
-      ${bowlSVG(r, 92, c.carb)}
+      ${bowlSVG(r, first ? 64 : 92, c.carb)}
       <div class="hero-title">
         <p class="kicker">${esc(r.difficulty)} · ${esc(amountLabel(c))}${isFav(r.id) ? ' · <span class="fav-mark">Favorite</span>' : ''}</p>
-        <h2 id="hero-name" class="hero-name"><a href="#/meal/${r.id}">${esc(r.name)}</a></h2>
+        <h2 id="${first ? 'cook-name' : 'hero-name'}" class="hero-name"><a href="#/meal/${r.id}">${esc(r.name)}</a></h2>
         ${rl.text ? `<p class="ready-line ${rl.cls}">${esc(rl.text)}</p>` : ''}
       </div>
     </div>
-    <p class="portion mono">${esc(main.join(' · '))}</p>
+    ${first ? '' : `<p class="portion mono">${esc(main.join(' · '))}</p>
     ${dinnerStats(nu, tm)}
     <p class="fine">Approximate nutrition, per ${c.mode === 'amount' ? 'plate' : 'serving'}.</p>
     <div class="hero-actions">
@@ -2597,11 +3050,21 @@ function viewTonight() {
         <button type="button" class="btn" data-a="switch">Switch meal</button>
         <a class="btn" href="#/nocook">I don’t want to cook</a>
       </div>
-      <button type="button" class="text-btn" data-a="surprise">Surprise me</button>
-    </div>
-  </article>
+    </div>`}
+  </article>`;
+  const bananaNudge = S.prefs.trackInventory && inv('bananas') !== 'out' && inv('p_bananas') === 'out'
+    ? `<div class="nudge"><span>Slice a banana into the freezer tonight and ice cream is 8 minutes away tomorrow.</span><button type="button" class="btn small" data-a="freeze-bananas">Done, they’re in</button></div>` : '';
+  return `
+  <header class="top">
+    <p class="eyebrow">${now.toLocaleDateString(undefined, { weekday:'long', month:'long', day:'numeric' })}</p>
+    <span class="top-actions"><button type="button" class="icon-btn" data-a="timer-open" aria-label="Kitchen timer">${ICON.clock}</button><a class="icon-btn" href="#/settings" aria-label="Settings">${ICON.gear}</a></span>
+  </header>
+  ${S.timer ? `<div class="banners"><div class="banner timer-banner"><span><strong>${esc(S.timer.label)}</strong> <span class="mono" id="timer-left">${fmtSec((S.timer.end - Date.now()) / 1000)}</span></span><button type="button" class="text-btn" data-a="timer-stop">Stop</button></div></div>` : ''}
+  ${banners ? `<div class="banners">${banners}</div>` : ''}
+  <h1 class="display">${first ? 'Dinner’s already made.' : 'What are we eating tonight?'}</h1>
+  ${first ? heroFridge + `<div class="sec cook-instead"><p class="label">Or cook tonight</p>${heroCook}</div>` : heroCook}
 
-  ${section('Want something sweet?', `<ul class="drows">${sweet}</ul><button type="button" class="text-btn" data-a="surprise-dessert">Surprise dessert</button>`)}
+  ${section('Want something sweet?', `<ul class="drows">${sweet}</ul>${bananaNudge}`)}
   ${section('Kitchen check', kitchen)}
   <div class="sec">${weekRow}</div>`;
 }
@@ -2621,7 +3084,6 @@ function sheetSwitch() {
         ${rl.text ? `<span class="ready-line ${rl.cls}">${esc(rl.text)}</span>` : ''}</span>
         ${r.id === cur ? '<span class="tag">Tonight</span>' : ''}</button></li>`;
     }).join('')}</ul>
-    <button type="button" class="btn wide" data-a="surprise">Surprise me</button>
   </div>`;
 }
 
@@ -2654,19 +3116,29 @@ function missingButtons(id) {
 }
 
 /* ---------- MEALS ---------- */
-function viewMeals() {
-  const rows = DINNERS.map(r => {
-    const c = build(r);
-    const nu = nutrition(c), tm = times(c);
-    const rl = readyLabel(bestReadiness(r));
-    return `<li class="mrow"><a class="mrow-main" href="#/meal/${r.id}">${bowlSVG(r, 56, c.carb)}<span class="mrow-body">
-      <span class="mrow-name">${esc(r.name)}</span>
-      <span class="meta">~${roundKcal(nu.kcal)} kcal · ${roundG(nu.protein)} g protein · ${tm.total} min</span>
-      ${rl.text ? `<span class="ready-line ${rl.cls}">${esc(rl.text)}</span>` : ''}</span></a>${favBtn(r.id, r.name)}</li>`;
-  }).join('');
+function mealRow(r, art) {
+  const c = build(r, r.type === 'dessert' ? { tier:'base' } : {});
+  const nu = nutrition(c), tm = times(c);
+  const rl = readyLabel(bestReadiness(r));
+  const href = r.type === 'dinner' ? '#/meal/' + r.id : '#/sweet/' + r.id;
+  const time = r.type === 'dinner' ? tm.total + ' min' : (r.bakes ? fmtDur(tm.active + tm.bake) : fmtDur(tm.total));
+  return `<li class="mrow"><a class="mrow-main" href="${href}">${art}<span class="mrow-body">
+    <span class="mrow-name">${esc(r.name)}</span>
+    <span class="meta">~${roundKcal(nu.kcal)} kcal · ${roundG(nu.protein)} g protein · ${time}</span>
+    ${rl.text ? `<span class="ready-line ${rl.cls}">${esc(rl.text)}</span>` : ''}</span></a>${favBtn(r.id, r.name)}</li>`;
+}
+function viewMeals(kind) {
+  kind = kind === 'sweet' ? 'sweet' : 'dinners';
+  const list = kind === 'sweet'
+    ? DESSERTS.map(r => mealRow(r, glyphSVG(r, 52))).join('')
+    : DINNERS.map(r => mealRow(r, bowlSVG(r, 56, getOpts(r).carb))).join('');
   return `
-  <header class="page-head"><h1 class="h1">Meals</h1><button type="button" class="btn small" data-a="surprise-go">Surprise me</button></header>
-  <ul class="mrows">${rows}</ul>`;
+  <header class="page-head"><h1 class="h1">Meals</h1></header>
+  <nav class="tabs" aria-label="Meal types">
+    <a href="#/meals" ${kind === 'dinners' ? 'aria-current="page"' : ''}>Dinners</a>
+    <a href="#/sweet" ${kind === 'sweet' ? 'aria-current="page"' : ''}>Sweet</a>
+  </nav>
+  <ul class="mrows">${list}</ul>`;
 }
 
 function viewMeal(id) {
@@ -2693,7 +3165,7 @@ function viewMeal(id) {
   const visibleOpts = [
     `<div class="opt"><span class="opt-label">Servings</span>${seg('Servings', [[1,'1'],[2,'2'],[4,'4'],[6,'6'],['amount','I have…']], o.mode === 'amount' ? 'amount' : o.servings, 'opt', `data-rid="${id}" data-k="servings"`)}${amountBox}</div>`,
     r.hasCut ? `<div class="opt"><span class="opt-label">Chicken</span>${seg('Chicken', [['breast','Breast'],['thigh','Thighs']], o.cut, 'opt', `data-rid="${id}" data-k="cut"`)}</div>` : '',
-    r.hasCarbChoice ? `<div class="opt"><span class="opt-label">Carb</span>${seg('Carb', [['rice','Rice'],['potato','Potatoes']], o.carb, 'opt', `data-rid="${id}" data-k="carb"`)}</div>` : '',
+    (r.carbs && r.carbs.length > 1) ? `<div class="opt"><span class="opt-label">${r.id === 'chili' ? 'Serve it' : 'Carb'}</span>${seg('Carb', r.carbs.map(k => [k, CARB_LABEL[k]]), o.carb, 'opt', `data-rid="${id}" data-k="carb"`)}</div>` : '',
     r.hasSauceChoice ? `<div class="opt"><span class="opt-label">BBQ sauce</span>${seg('BBQ sauce', [['regular','Regular'],['smoky','Smoky'],['spicy','Spicy']], o.sauce, 'opt', `data-rid="${id}" data-k="sauce"`)}</div>` : '',
   ].join('');
   const moreOpts = `<details class="more more-opts" data-d="opts"><summary>More options</summary><div class="opts">
@@ -2735,21 +3207,6 @@ function viewMeal(id) {
 }
 
 /* ---------- SWEET ---------- */
-function viewSweet() {
-  const rows = DESSERTS.map(r => {
-    const c = build(r, { tier:'base' });
-    const nu = nutrition(c), tm = times(c);
-    const rl = readyLabel(bestReadiness(r));
-    return `<li class="mrow"><a class="mrow-main" href="#/sweet/${r.id}">${glyphSVG(r, 52)}<span class="mrow-body">
-      <span class="mrow-name">${esc(r.name)}</span>
-      <span class="meta">~${roundKcal(nu.kcal)} kcal · ${roundG(nu.protein)} g protein · ${r.bakes ? fmtDur(tm.active + tm.bake) : fmtDur(tm.total)}</span>
-      ${rl.text ? `<span class="ready-line ${rl.cls}">${esc(rl.text)}</span>` : ''}</span></a>${favBtn(r.id, r.name)}</li>`;
-  }).join('');
-  return `
-  <header class="page-head"><h1 class="h1">Sweet</h1><button type="button" class="btn small" data-a="surprise-dessert">Surprise me</button></header>
-  <ul class="mrows">${rows}</ul>`;
-}
-
 function viewDessert(id) {
   const r = RECIPE[id];
   if (!r || r.type !== 'dessert') return emptyState('That dessert isn’t here.', '', '<a class="btn" href="#/sweet">See desserts</a>');
@@ -2820,11 +3277,11 @@ function stepper(label, value, act, attrs, display) {
 }
 
 function viewPrep(tab) {
-  tab = ['dinners','ingredients','bake','portion'].includes(tab) ? tab : (S.ui.prepTab || 'dinners');
+  tab = ['dinners','bake','portion'].includes(tab) ? tab : (['dinners','bake','portion'].includes(S.ui.prepTab) ? S.ui.prepTab : 'dinners');
   S.ui.prepTab = tab;
-  const tabs = [['dinners','Dinners'],['ingredients','Ingredients'],['bake','Bake'],['portion','Portion']];
+  const tabs = [['dinners','Dinners'],['bake','Bake'],['portion','Portion']];
   const nav = `<nav class="tabs" aria-label="Prep sections">${tabs.map(([k, l]) => `<a href="#/prep/${k}" ${k === tab ? 'aria-current="page"' : ''}>${l}</a>`).join('')}</nav>`;
-  const body = tab === 'dinners' ? prepDinners() : tab === 'ingredients' ? prepComponents() : tab === 'bake' ? prepBake() : prepPortion();
+  const body = tab === 'dinners' ? prepDinners() : tab === 'bake' ? prepBake() : prepPortion();
   return `${backLink('#/settings', 'Settings')}<header class="page-head"><h1 class="h1">Meal prep</h1></header>${nav}${body}`;
 }
 
@@ -2945,52 +3402,69 @@ function prepPortion() {
 }
 
 /* ---------- INVENTORY ---------- */
-function viewInventory(tab) {
-  tab = ['kitchen','shopping'].includes(tab) ? tab : (S.ui.invTab === 'shopping' ? 'shopping' : 'kitchen');
-  S.ui.invTab = tab;
-  const open = S.shopping.filter(x => !x.checked).length;
-  const tabs = [['kitchen','Kitchen'],['shopping','Shopping' + (open ? ' · ' + open : '')]];
-  const nav = `<nav class="tabs" aria-label="Inventory sections">${tabs.map(([k, l]) => `<a href="#/inventory/${k}" ${k === tab ? 'aria-current="page"' : ''}>${l}</a>`).join('')}</nav>`;
-  let body;
-  if (!S.prefs.trackInventory && tab === 'kitchen') body = emptyState('Inventory tracking is off.', 'Recipes won’t show stock status, and shopping lists won’t know what you have.', '<button type="button" class="btn" data-a="pref-toggle" data-k="trackInventory">Turn it on</button>');
-  else body = tab === 'kitchen' ? invKitchen() : invShopping();
-  return `<header class="page-head"><h1 class="h1">Inventory</h1></header>${nav}${body}`;
+function viewKitchen() {
+  const body = S.prefs.trackInventory ? invKitchen()
+    : emptyState('Inventory tracking is off.', 'Recipes won’t show stock status, and shopping lists won’t know what you have.', '<button type="button" class="btn" data-a="pref-toggle" data-k="trackInventory">Turn it on</button>');
+  return `<header class="page-head"><h1 class="h1">Kitchen</h1><a class="btn small" href="#/shopping">Shopping list</a></header>${body}`;
+}
+function viewShopping() {
+  return `<header class="page-head"><h1 class="h1">Shopping</h1><a class="btn small" href="#/kitchen">Kitchen</a></header>${invShopping()}`;
 }
 
 function invKitchen() {
+  const fresh = ITEMS.filter(i => i.fresh && !i.prepped);
   const counts = { in:0, low:0, out:0 };
-  ITEMS.filter(i => !i.prepped).forEach(i => counts[inv(i.id)]++);
+  fresh.forEach(i => counts[inv(i.id)]++);
   const f = S.ui.invFilter;
-  const isEmpty = counts.in + counts.low === 0;
-  const empty = isEmpty ? emptyState('Your kitchen is empty.', 'Open a category and tap what you have, or start from tonight’s dinner.',
+  const term = (S.ui.invSearch || '').trim().toLowerCase();
+  const isEmpty = ITEMS.filter(i => !i.prepped).every(i => inv(i.id) === 'out');
+  const empty = isEmpty ? emptyState('Your kitchen is empty.', 'Tap what you have, or start from tonight’s dinner.',
     '<div class="btn-row center"><button type="button" class="btn primary" data-a="build-list">Build shopping list</button><button type="button" class="btn" data-a="basics">I have the basics</button></div>') : '';
-  const cats = CATS.map(cat => {
-    const all = ITEMS.filter(i => i.cat === cat.id || i.alsoCat === cat.id);
-    const list = f === 'all' ? all : all.filter(i => inv(i.id) === f);
-    if (!list.length) return '';
-    const low = all.filter(i => inv(i.id) === 'low').length, out = all.filter(i => inv(i.id) === 'out').length;
-    const status = cat.id === 'prepped'
-      ? (all.length - out ? (all.length - out) + ' ready' : 'none')
-      : [low ? low + ' low' : '', out ? out + ' out' : ''].filter(Boolean).join(' · ') || 'all stocked';
-    const rows = list.map(i => {
-      const st = inv(i.id);
-      const word = st === 'in' ? 'In stock' : st === 'low' ? 'Low' : 'Out';
-      const date = i.prepped && st !== 'out' && S.invDates[i.id] ? `<span class="inv-used">Cooked ${fmtDay(S.invDates[i.id])}</span>` : '';
-      return `<li><button type="button" class="inv-row" data-a="inv" data-id="${i.id}" aria-label="${esc(i.name)}: ${word}. Tap to change.">
-        <span class="inv-body"><span class="inv-name">${esc(i.name)}</span>${date}</span>
-        <span class="pill ${st}"><i aria-hidden="true">${st === 'in' ? '●' : st === 'low' ? '◐' : '○'}</i>${word}</span></button></li>`;
-    }).join('');
-    return `<details class="inv-cat" data-d="inv-${cat.id}"${f !== 'all' ? ' open' : ''}><summary><span class="inv-cat-name">${cat.name}</span><span class="inv-cat-status ${out ? 'out' : low ? 'low' : 'in'}">${status}</span></summary><ul class="inv">${rows}</ul></details>`;
+  const row = i => {
+    const st = inv(i.id);
+    const word = st === 'in' ? 'In stock' : st === 'low' ? 'Low' : 'Out';
+    const date = i.prepped && st !== 'out' && S.invDates[i.id] ? `<span class="inv-used">Since ${fmtDay(S.invDates[i.id])}</span>` : '';
+    return `<li><button type="button" class="inv-row" data-a="inv" data-id="${i.id}" aria-label="${esc(i.name)}: ${word}. Tap to change.">
+      <span class="inv-body"><span class="inv-name">${esc(i.name)}</span>${date}</span>
+      <span class="pill ${st}"><i aria-hidden="true">${st === 'in' ? '●' : st === 'low' ? '◐' : '○'}</i>${word}</span></button></li>`;
+  };
+  const match = i => (!term || i.name.toLowerCase().includes(term)) && (f === 'all' || inv(i.id) === f);
+  if (term) {
+    const hits = ITEMS.filter(match);
+    return `${searchBox(term)}${hits.length ? `<ul class="inv">${hits.map(row).join('')}</ul>` : emptyState('Nothing matches “' + esc(term) + '”.', '')}`;
+  }
+  const group = (title, list, hint, open) => {
+    const shown = list.filter(match);
+    if (!shown.length) return '';
+    const low = list.filter(i => inv(i.id) === 'low').length, out = list.filter(i => inv(i.id) === 'out').length;
+    const status = [low ? low + ' low' : '', out ? out + ' out' : ''].filter(Boolean).join(' · ') || 'all stocked';
+    return `<details class="inv-cat" data-d="invg-${title}"${open ? ' open' : ''}><summary><span class="inv-cat-name">${title}</span><span class="inv-cat-status ${out ? 'out' : low ? 'low' : 'in'}">${status}</span></summary>
+      ${hint ? `<p class="fine">${hint}</p>` : ''}<ul class="inv">${shown.map(row).join('')}</ul></details>`;
+  };
+  const prepped = ITEMS.filter(i => i.prepped);
+  const pantryCats = CATS.filter(c => c.id !== 'prepped').map(cat => {
+    const list = ITEMS.filter(i => (i.cat === cat.id || i.alsoCat === cat.id) && !i.fresh);
+    return list.length ? group(cat.name, list, '', f !== 'all') : '';
   }).join('');
   return `
-  <div class="inv-summary"><span><strong class="mono">${counts.in}</strong> in stock</span><span><strong class="mono">${counts.low}</strong> low</span><span><strong class="mono">${counts.out}</strong> out</span></div>
+  ${searchBox(term)}
+  <div class="inv-summary"><span><strong class="mono">${counts.in}</strong> fresh in stock</span><span><strong class="mono">${counts.low}</strong> low</span><span><strong class="mono">${counts.out}</strong> out</span></div>
   ${seg('Show', [['all','All'],['low','Running low'],['out','Need to buy']], f, 'inv-filter')}
-  <p class="fine">Tap an item to cycle: In stock → Low → Out. Spices, oil, vanilla and baking powder count as in stock unless you mark them.</p>
   ${empty}
-  <div class="inv-cats">${cats || emptyState(f === 'low' ? 'Nothing is running low.' : 'Nothing is out.', '')}</div>
+  <div class="inv-cats">
+    ${group('Fresh', fresh, 'The things that run out. Worth a glance before you shop.', f === 'all' || undefined)}
+    ${prepped.some(i => inv(i.id) !== 'out') || f !== 'all' ? group('Already cooked', prepped, 'Set by cooking ahead.', false) : ''}
+    <p class="label">Pantry · set once</p>
+    <p class="fine">Spices, oil, vanilla and baking powder count as in stock unless you mark them.</p>
+    ${pantryCats}
+  </div>
   <div class="danger-zone"><button type="button" class="text-btn" data-a="reset-inv">Reset inventory</button></div>`;
 }
-
+function searchBox(term) {
+  return `<form class="search" data-a="noop" onsubmit="return false"><label for="inv-search" class="visually-hidden">Search the kitchen</label>
+    <input id="inv-search" type="search" inputmode="search" placeholder="Search ingredients" autocomplete="off" value="${esc(term)}" data-a="inv-search">
+    ${term ? '<button type="button" class="text-btn" data-a="inv-search-clear">Clear</button>' : ''}</form>`;
+}
 function invShopping() {
   const needs = mergeNeeds(shoppingNeeds());
   const onList = new Set(S.shopping.map(x => x.id));
@@ -3008,7 +3482,8 @@ function invShopping() {
   const basedOn = srcList.filter(([k]) => S.shopSources[k] && !(k === 'week' && !weekTotal) && !(k === 'tonight' && S.shopSources.week && weekTotal)).map(([, l]) => l.split(/[:(]/)[0].trim().toLowerCase()).join(', ') || 'nothing selected';
   const weekHTML = `<details class="week-plan" data-d="week-plan"${weekTotal ? ' open' : ''}><summary><span class="week-title">This week’s dinners</span><span class="week-count">${weekTotal ? weekTotal + ' planned' : 'Plan ahead'}</span></summary>
     <ul class="split">${DINNERS.map(r => `<li class="split-row">${bowlSVG(r, 32, getOpts(r).carb)}<span class="split-name">${esc(r.short)}</span>${stepper(r.short + ' this week', week[r.id] || 0, 'week-step', `data-id="${r.id}"`)}</li>`).join('')}</ul>
-    <p class="fine">Each one is a standard serving. The list covers these instead of just tonight. Resets every Monday.${weekTotal ? ` <button type="button" class="text-btn inline" data-a="week-clear">Clear</button>` : ''}</p></details>`;
+    <p class="fine">Each one is a standard serving. The list covers these instead of just tonight. Resets every Monday.${weekTotal ? ` <button type="button" class="text-btn inline" data-a="week-clear">Clear</button>` : ''}</p>
+    ${!weekTotal && sum(Object.values(lastWeekCounts())) ? `<button type="button" class="btn small" data-a="week-same">Same as last week (${sum(Object.values(lastWeekCounts()))} dinners)</button>` : ''}</details>`;
   const sources = `<details class="more" data-d="shop-sources"><summary>Based on ${esc(basedOn)}</summary><ul class="checks">${srcList.map(([k, l]) =>
     `<li><input type="checkbox" id="src-${k}" data-a="shop-src" data-k="${k}" ${S.shopSources[k] ? 'checked' : ''}><label for="src-${k}">${esc(l)}</label></li>`).join('')}</ul></details>`;
   const addBtn = !S.prefs.trackInventory ? '' : toAdd
@@ -3028,7 +3503,7 @@ function invShopping() {
       return `<li class="${x.checked ? 'done' : ''}"><input type="checkbox" id="${id}" data-a="shop-check" data-id="${esc(x.id)}" ${x.checked ? 'checked' : ''}><label for="${id}"><span class="shop-name">${esc(name)}</span>${qty ? `<span class="shop-qty mono">${esc(qty)}</span>` : ''}</label></li>`;
     }).join('')}</ul>`).join('');
     const checked = list.filter(x => x.checked).length;
-    listHTML += `<div class="btn-row">${checked ? `<button type="button" class="btn small primary" data-a="shop-putaway">Put away ${checked} (mark in stock)</button>` : ''}<button type="button" class="text-btn" data-a="shop-clear">Clear list</button></div>`;
+    listHTML += `<div class="btn-row">${checked ? `<button type="button" class="btn small primary" data-a="shop-putaway">Put away ${checked} (mark in stock)</button>` : ''}<button type="button" class="btn small" data-a="shop-copy">Copy list</button><button type="button" class="text-btn" data-a="shop-clear">Clear list</button></div>`;
   }
   return `
   ${weekHTML}
@@ -3075,7 +3550,8 @@ function viewNoCook() {
   <header class="page-head"><h1 class="h1">Five-minute mode</h1></header>
   ${good.length ? section('Ready to heat', readyHTML) : ''}
   ${frozen.length ? `<p class="callout"><strong>${frozen.length} in the freezer.</strong> Move one to the fridge tonight for tomorrow. <a href="#/prep/portion">Manage</a></p>` : ''}
-  ${section(showAll ? 'Closest options' : 'You can make these now', (showAll ? '<p class="muted">Nothing is fully ready with what’s marked in your kitchen. These need the fewest things.</p>' : '') + quickHTML)}`;
+  ${section(showAll ? 'Closest options' : 'Assemble something', (showAll && !good.length ? '<p class="muted">Nothing is fully ready with what’s marked in your kitchen. These need the fewest things.</p>' : '') + quickHTML)}
+  <div class="sec order-out"><p class="muted">Not tonight?</p><button type="button" class="btn wide" data-a="order-out">Ordering tonight</button><p class="fine">Logs it and moves on. No judgment — knowing how often it happens is the useful part.</p></div>`;
 }
 
 /* ---------- WEEK ---------- */
@@ -3152,10 +3628,10 @@ let lastRoute = '';
 
 /* ---------- Toast ---------- */
 let toastTimer = 0;
-function toast(msg) {
+function toast(msg, action) {
   const el = $('#toast');
   if (!el) return;
-  el.textContent = msg;
+  el.innerHTML = esc(msg) + (action ? ` <button type="button" class="toast-act" data-a="${action.act}">${esc(action.label)}</button>` : '');
   el.hidden = false;
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => { el.hidden = true; }, 3200);
@@ -3265,7 +3741,7 @@ function renderCook() {
       : `<h2 class="h3">Get out</h2>${bullets(r.mise)}<h2 class="h3">Equipment</h2>${bullets(r.equipment)}`;
     const summary = isBake
       ? `${esc(c.y.label)}${c.v ? ' · ' + esc(c.v.label) : ''}${c.g ? ' · ' + esc(c.g.label) + (c.g.id === 'none' ? '' : ' glaze') : ''}`
-      : `${esc(amountLabel(c))} · ${c.tier[0].toUpperCase() + c.tier.slice(1)}${r.hasCarbChoice ? ' · ' + (c.carb === 'potato' ? 'potatoes' : 'rice') : ''}${c.carb === 'rice' ? ' · ' + (c.rice === 'ready' ? 'rice already cooked' : 'fresh rice') : ''}`;
+      : `${esc(amountLabel(c))} · ${c.tier[0].toUpperCase() + c.tier.slice(1)}${(r.carbs && r.carbs.length > 1) ? ' · ' + CARB_LABEL[c.carb].toLowerCase() : ''}${c.carb === 'rice' ? ' · ' + (c.rice === 'ready' ? 'rice already cooked' : 'fresh rice') : ''}`;
     body = `<p class="cook-step mono">${isBake ? 'Before you start' : 'Mise en place'} · about ${fmtDur(sch.total)}</p>
       <h1 id="cook-title" class="cook-title">${isBake ? 'Before you start' : 'Get everything out'}</h1>
       <p class="cook-sub">${summary}</p>
@@ -3289,18 +3765,18 @@ function renderCook() {
       <p class="cook-text">${esc([fill(s.text, c), s.safety, s.batch].filter(Boolean).join(' '))}</p>
       ${s.warn ? `<p class="callout warn"><strong>Heads up</strong> ${esc(s.warn)}</p>` : ''}
       ${timer}`;
-    controls = `<button type="button" class="btn" data-a="cook-back">Back</button><button type="button" class="btn" data-a="cook-pause">Pause</button><button type="button" class="btn" data-a="cook-skip">Skip</button><button type="button" class="btn primary" data-a="cook-next">Done</button>`;
+    controls = `<button type="button" class="btn" data-a="cook-back">Back</button><button type="button" class="btn" data-a="cook-pause">Pause</button><button type="button" class="btn primary span2" data-a="cook-next">Done</button>`;
   } else {
     const nu = nutrition(c);
     const extra = r.type === 'dinner' && c.n > 1;
     body = `<p class="cook-step mono">Finished</p>
       <h1 id="cook-title" class="cook-title">${isBake ? 'Done.' : 'Dinner’s ready.'}</h1>
       ${r.type === 'dinner' ? `<p class="cook-text">${esc(r.finish)}</p>` : `<p class="cook-text">${esc(r.storage.room)}</p>`}
-      ${r.type === 'dinner'
-        ? `<h2 class="h3">If you’re not finishing it</h2>${bullets(r.leftovers.separate)}<h2 class="h3">Storage</h2>${bullets(r.leftovers.storage.slice(0, 2))}`
-        : `<dl class="kv"><div><dt>Fridge</dt><dd>${esc(r.storage.fridge)}</dd></div><div><dt>Freezer</dt><dd>${esc(r.storage.freezer)}</dd></div><div><dt>Reheat</dt><dd>${esc(r.storage.reheat)}</dd></div></dl>`}
-      ${extra ? (() => { const left = c.n - 1, fridge = Math.min(left, FRIDGE_SLOTS - 1), freezer = left - fridge; const word = c.mode === 'amount' ? 'plate' : 'serving'; return `<div class="check-line"><input type="checkbox" id="cook-pack" checked><label for="cook-pack">${left === 1 ? `Save the other ${word} as a fridge container` : `Save the other ${left} ${word}s as containers: ${fridge} in the fridge${freezer ? `, ${freezer} in the freezer` : ''}`}</label></div>`; })() : ''}
       ${kitchenUpdate(c)}
+      ${r.type === 'dinner'
+        ? `<details class="more" data-d="finish-storage"><summary>Storing the rest</summary>${bullets(r.leftovers.separate)}${bullets(r.leftovers.storage.slice(0, 2))}</details>`
+        : `<details class="more" data-d="finish-storage"><summary>Storing it</summary><dl class="kv"><div><dt>Fridge</dt><dd>${esc(r.storage.fridge)}</dd></div><div><dt>Freezer</dt><dd>${esc(r.storage.freezer)}</dd></div><div><dt>Reheat</dt><dd>${esc(r.storage.reheat)}</dd></div></dl></details>`}
+      ${extra ? (() => { const left = c.n - 1, fridge = Math.min(left, FRIDGE_SLOTS - 1), freezer = left - fridge; const word = c.mode === 'amount' ? 'plate' : 'serving'; return `<div class="check-line"><input type="checkbox" id="cook-pack" checked><label for="cook-pack">${left === 1 ? `Save the other ${word} as a fridge container` : `Save the other ${left} ${word}s as containers: ${fridge} in the fridge${freezer ? `, ${freezer} in the freezer` : ''}`}</label></div>`; })() : ''}
       ${noteCallout(r.id)}
       <p class="fine">~${roundKcal(nu.kcal)} kcal · ${roundG(nu.protein)} g protein per ${isBake ? c.y.unit : c.mode === 'amount' ? 'plate' : 'serving'}, approximate.</p>`;
     controls = `<button type="button" class="btn" data-a="cook-back">Back</button><button type="button" class="btn primary span3" data-a="cook-finish">Log it and finish</button>`;
@@ -3347,7 +3823,7 @@ function kitchenUpdate(c) {
     seen.add(id); ids.push(id);
   });
   if (!ids.length) return '';
-  return `<h2 class="h3">Update your kitchen</h2><p class="fine">Tap anything you used up or are running low on.</p>
+  return `<h2 class="h3 first">Update your kitchen</h2><p class="fine">Already dropped to Low for you. Tap anything that's actually gone.</p>
     <ul class="inv cook-inv">${ids.map(id => { const st = inv(id); const word = st === 'in' ? 'In stock' : st === 'low' ? 'Low' : 'Out';
       return `<li><button type="button" class="inv-row" data-a="cook-inv" data-id="${id}" aria-label="${esc(itemName(id))}: ${word}. Tap to change."><span class="inv-body"><span class="inv-name">${esc(itemName(id))}</span></span><span class="pill ${st}"><i aria-hidden="true">${st === 'in' ? '●' : st === 'low' ? '◐' : '○'}</i>${word}</span></button></li>`; }).join('')}</ul>`;
 }
@@ -3362,6 +3838,11 @@ function cookMove(delta) {
 }
 
 function tick() {
+  if (S.timer) {
+    const left = S.timer.end - Date.now();
+    if (left <= 0) { const label = S.timer.label; S.timer = null; save(); beep(); toast(label + ' done'); render(); }
+    else { const el = $('#timer-left'); if (el) el.textContent = fmtSec(left / 1000); }
+  }
   if (!S.cook) return;
   let finished = false;
   Object.entries(S.cook.timers).forEach(([k, t]) => {
@@ -3436,6 +3917,9 @@ function renderSheet() {
   else if (SHEET.confirm) inner = `<div class="sheet-inner"><h2 class="h2" id="sheet-title">${esc(SHEET.title)}</h2><p class="muted">${esc(SHEET.text)}</p>${SHEET.altLabel
       ? `<div class="pair"><button type="button" class="btn primary" data-a="confirm-alt">${esc(SHEET.altLabel)}</button><button type="button" class="btn danger" data-a="confirm-yes">${esc(SHEET.yesLabel)}</button></div><button type="button" class="text-btn" data-a="close-sheet">Cancel</button>`
       : `<div class="pair"><button type="button" class="btn" data-a="close-sheet">Cancel</button><button type="button" class="btn danger-fill" data-a="confirm-yes">${esc(SHEET.yesLabel)}</button></div>`}</div>`;
+  else if (SHEET.timer) inner = `<div class="sheet-inner"><div class="sheet-head"><h2 class="h2" id="sheet-title">Kitchen timer</h2><button type="button" class="icon-btn" data-a="close-sheet" aria-label="Close">${ICON.close}</button></div>
+    <p class="muted">For anything the app isn’t walking you through.</p>
+    <div class="timer-presets">${[3,5,10,15,20,30].map(m => `<button type="button" class="btn" data-a="timer-set" data-v="${m}">${m} min</button>`).join('')}</div></div>`;
   else if (SHEET.paste) inner = `<div class="sheet-inner"><div class="sheet-head"><h2 class="h2" id="sheet-title">Paste backup text</h2><button type="button" class="icon-btn" data-a="close-sheet" aria-label="Close">${ICON.close}</button></div><label for="paste-box" class="muted">Paste the whole backup text, then Restore.</label><textarea id="paste-box" class="note-input" rows="6" autocomplete="off"></textarea><button type="button" class="btn primary wide" data-a="restore-from-paste">Restore</button></div>`;
   else if (SHEET.backupText) inner = `<div class="sheet-inner"><div class="sheet-head"><h2 class="h2" id="sheet-title">Copy your backup</h2><button type="button" class="icon-btn" data-a="close-sheet" aria-label="Close">${ICON.close}</button></div><p class="muted">Saving a file isn’t available here. Copy this text and keep it somewhere safe, like Notes.</p><textarea id="backup-box" class="note-input mono" rows="6" readonly>${esc(SHEET.backupText)}</textarea><button type="button" class="btn primary wide" data-a="backup-copy">Copy text</button></div>`;
   root.innerHTML = `<div class="backdrop" data-a="close-sheet"></div><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">${inner}</div>`;
@@ -3471,11 +3955,13 @@ function render() {
   try {
     switch (a) {
       case 'tonight': html = viewTonight(); break;
-      case 'meals': html = viewMeals(); break;
+      case 'meals': html = viewMeals('dinners'); break;
       case 'meal': html = viewMeal(b); tab = 'meals'; break;
-      case 'sweet': html = b ? viewDessert(b) : viewSweet(); break;
-      case 'prep': html = viewPrep(b); tab = 'tonight'; break;
-      case 'inventory': html = viewInventory(b); break;
+      case 'sweet': html = b ? viewDessert(b) : viewMeals('sweet'); tab = 'meals'; break;
+      case 'prep': html = viewPrep(b); tab = 'kitchen'; break;
+      case 'shopping': html = viewShopping(); break;
+      case 'kitchen': html = viewKitchen(); break;
+      case 'inventory': location.replace(b === 'shopping' ? '#/shopping' : '#/kitchen'); return;
       case 'nocook': html = viewNoCook(); tab = 'tonight'; break;
       case 'week': html = viewWeek(); tab = 'tonight'; break;
       case 'settings': html = viewSettings(); tab = 'tonight'; break;
@@ -3531,9 +4017,6 @@ const ACT = {
   'close-sheet'() { SHEET = null; renderSheet(); },
   'confirm-yes'() { const fn = SHEET && SHEET.onYes; SHEET = null; renderSheet(); if (fn) fn(); },
   'pick-meal'(el) { setTonight(el.dataset.id); SHEET = null; render(); toast('Tonight: ' + RECIPE[el.dataset.id].name); },
-  surprise() { const r = randomOther(DINNERS, recommendTonight()); setTonight(r.id); SHEET = null; if (parseRoute().a !== 'tonight') location.hash = '#/tonight'; render(); toast('Surprise: ' + r.name); },
-  'surprise-go'() { const r = randomOther(DINNERS, recommendTonight()); setTonight(r.id); location.hash = '#/meal/' + r.id; },
-  'surprise-dessert'() { const cur = parseRoute().b; const r = randomOther(DESSERTS, cur); location.hash = '#/sweet/' + r.id; },
   opt(el) {
     const { rid, k } = el.dataset;
     let v = el.dataset.v;
@@ -3551,6 +4034,28 @@ const ACT = {
     setOpt(rid, k, v);
     render();
   },
+  'heat-go'(el) { OPEN['heat-' + (S.containers.find(c => c.uid === el.dataset.id) || {}).rid] = true; location.hash = '#/nocook'; },
+  'freeze-bananas'() { setInv('p_bananas', 'in'); save(); render(); toast('Frozen banana coins are in the kitchen list'); },
+  'order-out'() { logHistory('takeout', null, { name:'ordered in' }); render(); toast('Logged. Eat well tomorrow.'); },
+  'undo-drop'() { lastDrop.forEach(id => setInv(id, 'in')); lastDrop = []; save(); render(); toast('Put back'); },
+  'timer-open'() { SHEET = { timer:true }; renderSheet(); },
+  'timer-set'(el) {
+    const mins = +el.dataset.v;
+    S.timer = { end: Date.now() + mins * 60000, label: mins + '-minute timer' };
+    SHEET = null; save(); render(); ensureAudio();
+    toast(mins + '-minute timer started');
+  },
+  'timer-stop'() { S.timer = null; save(); render(); },
+  'week-same'() { setWeekCounts(lastWeekCounts()); render(); toast('Same plan as last week'); },
+  async 'shop-copy'() {
+    const groups = {};
+    S.shopping.filter(x => !x.checked).forEach(x => { const a = ITEM[x.id] ? ITEM[x.id].aisle : 'Other'; (groups[a] = groups[a] || []).push((ITEM[x.id] ? ITEM[x.id].name : x.name) + (ITEM[x.id] && fmtBuy(x.id, x.g) ? ' — ' + fmtBuy(x.id, x.g) : '')); });
+    const text = Object.entries(groups).map(([a, list]) => a + '\n' + list.map(l => '- ' + l).join('\n')).join('\n\n');
+    if (!text) { toast('Nothing left to copy'); return; }
+    try { await navigator.clipboard.writeText(text); toast('List copied'); }
+    catch (e) { SHEET = { backupText: text }; renderSheet(); }
+  },
+  'inv-search-clear'() { S.ui.invSearch = ''; save(); render(); const el = $('#inv-search'); if (el) el.focus(); },
   'confirm-alt'() { const fn = SHEET && SHEET.onAlt; SHEET = null; renderSheet(); if (fn) fn(); },
   'week-step'(el) { setWeekCount(el.dataset.id, (weekCounts()[el.dataset.id] || 0) + (+el.dataset.d)); render(); },
   'week-clear'() { S.weekPlan = { start: weekStart(), counts:{} }; save(); render(); },
@@ -3722,7 +4227,6 @@ const ACT = {
   // cooking
   'cook-exit'() { S.cook && save(); location.hash = S.cook && RECIPE[S.cook.rid].type === 'dessert' ? '#/sweet/' + S.cook.rid : '#/tonight'; },
   'cook-next'() { ensureAudio(); cookMove(1); },
-  'cook-skip'() { cookMove(1); },
   'cook-back'() { cookMove(-1); },
   'cook-goto'(el) { S.cook.i = +el.dataset.i; save(); renderCook(); },
   'cook-pause'() {
@@ -3754,6 +4258,7 @@ const ACT = {
   'timer-reset'(el) { delete S.cook.timers[el.dataset.i]; save(); renderCook(); },
   'cook-finish'() {
     const { r, c } = cookContext();
+    delete S.checks[r.id];
     if (r.type === 'dinner') {
       const nu = nutrition(c);
       logHistory('dinner', r.id, { protein: nu.protein, veg: vegCups(c), n: c.n });
@@ -3765,10 +4270,11 @@ const ACT = {
       logHistory('dessert', r.id, { n: c.pieces });
     }
     const dest = r.type === 'dinner' ? '#/tonight' : '#/sweet/' + r.id;
+    if (S.prefs.trackInventory) { const dropped = freshUsed(c); dropped.forEach(id => setInv(id, 'low')); if (dropped.length) lastDrop = dropped; }
     S.cook = null;
     save();
     location.hash = dest;
-    toast(r.type === 'dinner' ? 'Logged. Nice work.' : 'Logged.');
+    toast(lastDrop.length ? `Logged. ${lastDrop.length} ${lastDrop.length > 1 ? 'items' : 'item'} marked Low.` : (r.type === 'dinner' ? 'Logged. Nice work.' : 'Logged.'), lastDrop.length ? { label:'Undo', act:'undo-drop' } : null);
   },
 
   // onboarding
@@ -3798,6 +4304,7 @@ function restoreBackupText(text) {
     toast('Backup restored');
   });
 }
+let lastDrop = [];
 const CHANGE = {
   'restore-file'(el) {
     const file = el.files && el.files[0];
@@ -3836,6 +4343,13 @@ function deferRender() { clearTimeout(pendingRender); pendingRender = setTimeout
 function flushRender() { if (!pendingRender) return false; clearTimeout(pendingRender); pendingRender = 0; return true; }
 document.addEventListener('input', e => {
   const el = e.target;
+  if (el.dataset && el.dataset.a === 'inv-search') {
+    S.ui.invSearch = el.value.slice(0, 40);
+    save(); render();
+    const box = $('#inv-search');
+    if (box) { box.focus(); box.setSelectionRange(box.value.length, box.value.length); }
+    return;
+  }
   if (el.dataset && el.dataset.a === 'note') {
     const t = el.value.slice(0, 1000);
     if (t.trim()) S.notes[el.dataset.rid] = t; else delete S.notes[el.dataset.rid];

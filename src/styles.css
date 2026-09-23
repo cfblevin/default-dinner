@@ -3,7 +3,7 @@
    Steel-cool neutrals, ink controls, enamel-cookware blue accent.
    ========================================================================= */
 :root {
-  --bg:#F2F3F0; --surface:#FFFFFF; --surface-2:#E8EAE5; --ink:#141714; --ink-2:#4B524C; --ink-3:#737A74;
+  --bg:#F2F3F0; --surface:#FFFFFF; --surface-2:#E8EAE5; --ink:#141714; --ink-2:#4B524C; --ink-3:#5C635D;
   --line:#DADED8; --line-strong:#BCC2BB;
   --accent:#2F4FA3; --accent-soft:#E2E8F6;
   --ok:#2A6A3D; --ok-soft:#E0EEE3; --warn:#855600; --warn-soft:#F5EAD3; --bad:#A1302A; --bad-soft:#F6E0DC; --on-bad:#FFFFFF;
@@ -13,6 +13,7 @@
   --f-spinach:#3D6D3A; --f-cuc:#B4D29C; --f-tomato:#CF4F39; --f-potato:#D8B068; --f-scallion:#3C7631; --f-yogurt:#FFFFFF; --f-bbq:#5A2A1C;
   --f-bread:#C98F52; --f-crust:#9A6433; --f-choc:#3A2419; --f-brownie:#4A2F24; --f-brownie-hi:#6E4938; --f-dough:#D9A866; --f-glaze:#5A3A2C;
   --f-cream:#F0E4C6; --f-cream-2:#E6B6B1; --f-cup:#2F4FA3;
+  --f-pasta:#E8CE8E; --f-sauce:#B5402C; --f-sausage:#9C5B3C; --f-egg:#EFC352; --f-hash:#D7A85A; --f-chili:#8E3B23; --f-peppers:#C6604A; --f-sesame:#F3EEDD; --f-parm:#F6F2E4;
   --shadow:0 1px 2px rgba(20,23,20,.05), 0 6px 20px rgba(20,23,20,.06);
   --font-display:'Schibsted Grotesk', ui-sans-serif, -apple-system, 'Helvetica Neue', Arial, sans-serif;
   --font-body:-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -30,6 +31,7 @@
     --btn:#ECEEEA; --on-btn:#0E100F;
     --bowl:#1E2220; --bowl-rim:#2F3430;
     --f-rice:#D7D1BF; --f-yogurt:#EDEDE8; --f-cup:#5D78C8; --f-bbq:#8A4A36; --f-bean:#5A5050; --f-choc:#1F130D;
+    --f-sauce:#C24B33; --f-chili:#A24A2E; --f-sesame:#E8E2D0; --f-parm:#EDE8D8;
     --shadow:0 1px 2px rgba(0,0,0,.4);
     color-scheme:dark;
   }
@@ -42,6 +44,7 @@
   --btn:#ECEEEA; --on-btn:#0E100F;
   --bowl:#1E2220; --bowl-rim:#2F3430;
   --f-rice:#D7D1BF; --f-yogurt:#EDEDE8; --f-cup:#5D78C8; --f-bbq:#8A4A36; --f-bean:#5A5050; --f-choc:#1F130D;
+    --f-sauce:#C24B33; --f-chili:#A24A2E; --f-sesame:#E8E2D0; --f-parm:#EDE8D8;
   --shadow:0 1px 2px rgba(0,0,0,.4);
   color-scheme:dark;
 }
@@ -177,7 +180,7 @@ details.sec > .sec-body { padding-top:8px; }
 .tag { display:inline-block; font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-2); background:var(--surface-2); border-radius:5px; padding:2px 6px; margin-left:6px; vertical-align:2px; }
 
 /* ---------- Stock ---------- */
-.stock { display:inline-flex; align-items:center; gap:5px; font-size:12.5px; font-weight:600; line-height:1.3; }
+.stock { display:inline-flex; align-items:center; gap:5px; font-size:13.5px; font-weight:600; line-height:1.3; }
 .stock i { font-style:normal; font-size:11px; }
 .stock.in { color:var(--ok); }
 .stock.low { color:var(--warn); }
@@ -549,3 +552,29 @@ body.cooking .toast { bottom:calc(110px + var(--safe-b)); }
 .backup label.btn { cursor:pointer; }
 .cook-inv { margin-top:4px; }
 .seg button:focus-visible, .chip:focus-visible, .rtabs button:focus-visible { outline-offset:-2px; }
+
+/* ---------- Leftovers-first Tonight, timer, nudges, search ---------- */
+.hero.fridge { border-color:color-mix(in srgb, var(--ok) 40%, var(--line)); }
+.cook-instead { padding-top:18px; }
+.cook-instead .hero { box-shadow:none; }
+.cook-instead .label { margin:0 0 8px; }
+.top-actions { display:flex; align-items:center; gap:2px; }
+.timer-banner { border-color:var(--accent); }
+.timer-banner .mono { font-size:17px; margin-left:6px; }
+.timer-presets { display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; }
+.nudge { display:flex; align-items:center; gap:12px; flex-wrap:wrap; justify-content:space-between; margin-top:12px; padding:12px; border:1px dashed var(--line-strong); border-radius:12px; font-size:14.5px; color:var(--ink-2); }
+.search { display:flex; gap:8px; align-items:center; margin:10px 0 4px; }
+.search input { flex:1; min-width:0; min-height:46px; border:1px solid var(--line-strong); border-radius:10px; padding:0 12px; background:var(--surface); color:var(--ink); font:16px var(--font-body); }
+.swap > summary { list-style:none; cursor:pointer; }
+.swap > summary::-webkit-details-marker { display:none; }
+.swap .stock.out { text-decoration:underline; text-underline-offset:3px; }
+.swap-text { font-size:13.5px; color:var(--ink-2); margin-top:4px; max-width:34em; }
+.ing-stock { grid-column:2; }
+.ings li.ing > .swap { grid-column:2; }
+.order-out { text-align:center; }
+.order-out .btn { margin-top:8px; }
+.cook-controls .span2 { grid-column:span 2; }
+.toast-act { background:none; border:0; color:var(--on-btn); font-weight:700; text-decoration:underline; padding:0 0 0 10px; }
+.shop li { min-height:48px; align-items:center; }
+.shop label { padding-block:6px; }
+.inv-cats .label { margin-top:26px; }

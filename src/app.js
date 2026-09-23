@@ -11,10 +11,10 @@ let lastRoute = '';
 
 /* ---------- Toast ---------- */
 let toastTimer = 0;
-function toast(msg) {
+function toast(msg, action) {
   const el = $('#toast');
   if (!el) return;
-  el.textContent = msg;
+  el.innerHTML = esc(msg) + (action ? ` <button type="button" class="toast-act" data-a="${action.act}">${esc(action.label)}</button>` : '');
   el.hidden = false;
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => { el.hidden = true; }, 3200);
@@ -124,7 +124,7 @@ function renderCook() {
       : `<h2 class="h3">Get out</h2>${bullets(r.mise)}<h2 class="h3">Equipment</h2>${bullets(r.equipment)}`;
     const summary = isBake
       ? `${esc(c.y.label)}${c.v ? ' · ' + esc(c.v.label) : ''}${c.g ? ' · ' + esc(c.g.label) + (c.g.id === 'none' ? '' : ' glaze') : ''}`
-      : `${esc(amountLabel(c))} · ${c.tier[0].toUpperCase() + c.tier.slice(1)}${r.hasCarbChoice ? ' · ' + (c.carb === 'potato' ? 'potatoes' : 'rice') : ''}${c.carb === 'rice' ? ' · ' + (c.rice === 'ready' ? 'rice already cooked' : 'fresh rice') : ''}`;
+      : `${esc(amountLabel(c))} · ${c.tier[0].toUpperCase() + c.tier.slice(1)}${(r.carbs && r.carbs.length > 1) ? ' · ' + CARB_LABEL[c.carb].toLowerCase() : ''}${c.carb === 'rice' ? ' · ' + (c.rice === 'ready' ? 'rice already cooked' : 'fresh rice') : ''}`;
     body = `<p class="cook-step mono">${isBake ? 'Before you start' : 'Mise en place'} · about ${fmtDur(sch.total)}</p>
       <h1 id="cook-title" class="cook-title">${isBake ? 'Before you start' : 'Get everything out'}</h1>
       <p class="cook-sub">${summary}</p>
@@ -148,18 +148,18 @@ function renderCook() {
       <p class="cook-text">${esc([fill(s.text, c), s.safety, s.batch].filter(Boolean).join(' '))}</p>
       ${s.warn ? `<p class="callout warn"><strong>Heads up</strong> ${esc(s.warn)}</p>` : ''}
       ${timer}`;
-    controls = `<button type="button" class="btn" data-a="cook-back">Back</button><button type="button" class="btn" data-a="cook-pause">Pause</button><button type="button" class="btn" data-a="cook-skip">Skip</button><button type="button" class="btn primary" data-a="cook-next">Done</button>`;
+    controls = `<button type="button" class="btn" data-a="cook-back">Back</button><button type="button" class="btn" data-a="cook-pause">Pause</button><button type="button" class="btn primary span2" data-a="cook-next">Done</button>`;
   } else {
     const nu = nutrition(c);
     const extra = r.type === 'dinner' && c.n > 1;
     body = `<p class="cook-step mono">Finished</p>
       <h1 id="cook-title" class="cook-title">${isBake ? 'Done.' : 'Dinner’s ready.'}</h1>
       ${r.type === 'dinner' ? `<p class="cook-text">${esc(r.finish)}</p>` : `<p class="cook-text">${esc(r.storage.room)}</p>`}
-      ${r.type === 'dinner'
-        ? `<h2 class="h3">If you’re not finishing it</h2>${bullets(r.leftovers.separate)}<h2 class="h3">Storage</h2>${bullets(r.leftovers.storage.slice(0, 2))}`
-        : `<dl class="kv"><div><dt>Fridge</dt><dd>${esc(r.storage.fridge)}</dd></div><div><dt>Freezer</dt><dd>${esc(r.storage.freezer)}</dd></div><div><dt>Reheat</dt><dd>${esc(r.storage.reheat)}</dd></div></dl>`}
-      ${extra ? (() => { const left = c.n - 1, fridge = Math.min(left, FRIDGE_SLOTS - 1), freezer = left - fridge; const word = c.mode === 'amount' ? 'plate' : 'serving'; return `<div class="check-line"><input type="checkbox" id="cook-pack" checked><label for="cook-pack">${left === 1 ? `Save the other ${word} as a fridge container` : `Save the other ${left} ${word}s as containers: ${fridge} in the fridge${freezer ? `, ${freezer} in the freezer` : ''}`}</label></div>`; })() : ''}
       ${kitchenUpdate(c)}
+      ${r.type === 'dinner'
+        ? `<details class="more" data-d="finish-storage"><summary>Storing the rest</summary>${bullets(r.leftovers.separate)}${bullets(r.leftovers.storage.slice(0, 2))}</details>`
+        : `<details class="more" data-d="finish-storage"><summary>Storing it</summary><dl class="kv"><div><dt>Fridge</dt><dd>${esc(r.storage.fridge)}</dd></div><div><dt>Freezer</dt><dd>${esc(r.storage.freezer)}</dd></div><div><dt>Reheat</dt><dd>${esc(r.storage.reheat)}</dd></div></dl></details>`}
+      ${extra ? (() => { const left = c.n - 1, fridge = Math.min(left, FRIDGE_SLOTS - 1), freezer = left - fridge; const word = c.mode === 'amount' ? 'plate' : 'serving'; return `<div class="check-line"><input type="checkbox" id="cook-pack" checked><label for="cook-pack">${left === 1 ? `Save the other ${word} as a fridge container` : `Save the other ${left} ${word}s as containers: ${fridge} in the fridge${freezer ? `, ${freezer} in the freezer` : ''}`}</label></div>`; })() : ''}
       ${noteCallout(r.id)}
       <p class="fine">~${roundKcal(nu.kcal)} kcal · ${roundG(nu.protein)} g protein per ${isBake ? c.y.unit : c.mode === 'amount' ? 'plate' : 'serving'}, approximate.</p>`;
     controls = `<button type="button" class="btn" data-a="cook-back">Back</button><button type="button" class="btn primary span3" data-a="cook-finish">Log it and finish</button>`;
@@ -206,7 +206,7 @@ function kitchenUpdate(c) {
     seen.add(id); ids.push(id);
   });
   if (!ids.length) return '';
-  return `<h2 class="h3">Update your kitchen</h2><p class="fine">Tap anything you used up or are running low on.</p>
+  return `<h2 class="h3 first">Update your kitchen</h2><p class="fine">Already dropped to Low for you. Tap anything that's actually gone.</p>
     <ul class="inv cook-inv">${ids.map(id => { const st = inv(id); const word = st === 'in' ? 'In stock' : st === 'low' ? 'Low' : 'Out';
       return `<li><button type="button" class="inv-row" data-a="cook-inv" data-id="${id}" aria-label="${esc(itemName(id))}: ${word}. Tap to change."><span class="inv-body"><span class="inv-name">${esc(itemName(id))}</span></span><span class="pill ${st}"><i aria-hidden="true">${st === 'in' ? '●' : st === 'low' ? '◐' : '○'}</i>${word}</span></button></li>`; }).join('')}</ul>`;
 }
@@ -221,6 +221,11 @@ function cookMove(delta) {
 }
 
 function tick() {
+  if (S.timer) {
+    const left = S.timer.end - Date.now();
+    if (left <= 0) { const label = S.timer.label; S.timer = null; save(); beep(); toast(label + ' done'); render(); }
+    else { const el = $('#timer-left'); if (el) el.textContent = fmtSec(left / 1000); }
+  }
   if (!S.cook) return;
   let finished = false;
   Object.entries(S.cook.timers).forEach(([k, t]) => {
@@ -295,6 +300,9 @@ function renderSheet() {
   else if (SHEET.confirm) inner = `<div class="sheet-inner"><h2 class="h2" id="sheet-title">${esc(SHEET.title)}</h2><p class="muted">${esc(SHEET.text)}</p>${SHEET.altLabel
       ? `<div class="pair"><button type="button" class="btn primary" data-a="confirm-alt">${esc(SHEET.altLabel)}</button><button type="button" class="btn danger" data-a="confirm-yes">${esc(SHEET.yesLabel)}</button></div><button type="button" class="text-btn" data-a="close-sheet">Cancel</button>`
       : `<div class="pair"><button type="button" class="btn" data-a="close-sheet">Cancel</button><button type="button" class="btn danger-fill" data-a="confirm-yes">${esc(SHEET.yesLabel)}</button></div>`}</div>`;
+  else if (SHEET.timer) inner = `<div class="sheet-inner"><div class="sheet-head"><h2 class="h2" id="sheet-title">Kitchen timer</h2><button type="button" class="icon-btn" data-a="close-sheet" aria-label="Close">${ICON.close}</button></div>
+    <p class="muted">For anything the app isn’t walking you through.</p>
+    <div class="timer-presets">${[3,5,10,15,20,30].map(m => `<button type="button" class="btn" data-a="timer-set" data-v="${m}">${m} min</button>`).join('')}</div></div>`;
   else if (SHEET.paste) inner = `<div class="sheet-inner"><div class="sheet-head"><h2 class="h2" id="sheet-title">Paste backup text</h2><button type="button" class="icon-btn" data-a="close-sheet" aria-label="Close">${ICON.close}</button></div><label for="paste-box" class="muted">Paste the whole backup text, then Restore.</label><textarea id="paste-box" class="note-input" rows="6" autocomplete="off"></textarea><button type="button" class="btn primary wide" data-a="restore-from-paste">Restore</button></div>`;
   else if (SHEET.backupText) inner = `<div class="sheet-inner"><div class="sheet-head"><h2 class="h2" id="sheet-title">Copy your backup</h2><button type="button" class="icon-btn" data-a="close-sheet" aria-label="Close">${ICON.close}</button></div><p class="muted">Saving a file isn’t available here. Copy this text and keep it somewhere safe, like Notes.</p><textarea id="backup-box" class="note-input mono" rows="6" readonly>${esc(SHEET.backupText)}</textarea><button type="button" class="btn primary wide" data-a="backup-copy">Copy text</button></div>`;
   root.innerHTML = `<div class="backdrop" data-a="close-sheet"></div><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">${inner}</div>`;
@@ -330,11 +338,13 @@ function render() {
   try {
     switch (a) {
       case 'tonight': html = viewTonight(); break;
-      case 'meals': html = viewMeals(); break;
+      case 'meals': html = viewMeals('dinners'); break;
       case 'meal': html = viewMeal(b); tab = 'meals'; break;
-      case 'sweet': html = b ? viewDessert(b) : viewSweet(); break;
-      case 'prep': html = viewPrep(b); tab = 'tonight'; break;
-      case 'inventory': html = viewInventory(b); break;
+      case 'sweet': html = b ? viewDessert(b) : viewMeals('sweet'); tab = 'meals'; break;
+      case 'prep': html = viewPrep(b); tab = 'kitchen'; break;
+      case 'shopping': html = viewShopping(); break;
+      case 'kitchen': html = viewKitchen(); break;
+      case 'inventory': location.replace(b === 'shopping' ? '#/shopping' : '#/kitchen'); return;
       case 'nocook': html = viewNoCook(); tab = 'tonight'; break;
       case 'week': html = viewWeek(); tab = 'tonight'; break;
       case 'settings': html = viewSettings(); tab = 'tonight'; break;
@@ -390,9 +400,6 @@ const ACT = {
   'close-sheet'() { SHEET = null; renderSheet(); },
   'confirm-yes'() { const fn = SHEET && SHEET.onYes; SHEET = null; renderSheet(); if (fn) fn(); },
   'pick-meal'(el) { setTonight(el.dataset.id); SHEET = null; render(); toast('Tonight: ' + RECIPE[el.dataset.id].name); },
-  surprise() { const r = randomOther(DINNERS, recommendTonight()); setTonight(r.id); SHEET = null; if (parseRoute().a !== 'tonight') location.hash = '#/tonight'; render(); toast('Surprise: ' + r.name); },
-  'surprise-go'() { const r = randomOther(DINNERS, recommendTonight()); setTonight(r.id); location.hash = '#/meal/' + r.id; },
-  'surprise-dessert'() { const cur = parseRoute().b; const r = randomOther(DESSERTS, cur); location.hash = '#/sweet/' + r.id; },
   opt(el) {
     const { rid, k } = el.dataset;
     let v = el.dataset.v;
@@ -410,6 +417,28 @@ const ACT = {
     setOpt(rid, k, v);
     render();
   },
+  'heat-go'(el) { OPEN['heat-' + (S.containers.find(c => c.uid === el.dataset.id) || {}).rid] = true; location.hash = '#/nocook'; },
+  'freeze-bananas'() { setInv('p_bananas', 'in'); save(); render(); toast('Frozen banana coins are in the kitchen list'); },
+  'order-out'() { logHistory('takeout', null, { name:'ordered in' }); render(); toast('Logged. Eat well tomorrow.'); },
+  'undo-drop'() { lastDrop.forEach(id => setInv(id, 'in')); lastDrop = []; save(); render(); toast('Put back'); },
+  'timer-open'() { SHEET = { timer:true }; renderSheet(); },
+  'timer-set'(el) {
+    const mins = +el.dataset.v;
+    S.timer = { end: Date.now() + mins * 60000, label: mins + '-minute timer' };
+    SHEET = null; save(); render(); ensureAudio();
+    toast(mins + '-minute timer started');
+  },
+  'timer-stop'() { S.timer = null; save(); render(); },
+  'week-same'() { setWeekCounts(lastWeekCounts()); render(); toast('Same plan as last week'); },
+  async 'shop-copy'() {
+    const groups = {};
+    S.shopping.filter(x => !x.checked).forEach(x => { const a = ITEM[x.id] ? ITEM[x.id].aisle : 'Other'; (groups[a] = groups[a] || []).push((ITEM[x.id] ? ITEM[x.id].name : x.name) + (ITEM[x.id] && fmtBuy(x.id, x.g) ? ' — ' + fmtBuy(x.id, x.g) : '')); });
+    const text = Object.entries(groups).map(([a, list]) => a + '\n' + list.map(l => '- ' + l).join('\n')).join('\n\n');
+    if (!text) { toast('Nothing left to copy'); return; }
+    try { await navigator.clipboard.writeText(text); toast('List copied'); }
+    catch (e) { SHEET = { backupText: text }; renderSheet(); }
+  },
+  'inv-search-clear'() { S.ui.invSearch = ''; save(); render(); const el = $('#inv-search'); if (el) el.focus(); },
   'confirm-alt'() { const fn = SHEET && SHEET.onAlt; SHEET = null; renderSheet(); if (fn) fn(); },
   'week-step'(el) { setWeekCount(el.dataset.id, (weekCounts()[el.dataset.id] || 0) + (+el.dataset.d)); render(); },
   'week-clear'() { S.weekPlan = { start: weekStart(), counts:{} }; save(); render(); },
@@ -581,7 +610,6 @@ const ACT = {
   // cooking
   'cook-exit'() { S.cook && save(); location.hash = S.cook && RECIPE[S.cook.rid].type === 'dessert' ? '#/sweet/' + S.cook.rid : '#/tonight'; },
   'cook-next'() { ensureAudio(); cookMove(1); },
-  'cook-skip'() { cookMove(1); },
   'cook-back'() { cookMove(-1); },
   'cook-goto'(el) { S.cook.i = +el.dataset.i; save(); renderCook(); },
   'cook-pause'() {
@@ -613,6 +641,7 @@ const ACT = {
   'timer-reset'(el) { delete S.cook.timers[el.dataset.i]; save(); renderCook(); },
   'cook-finish'() {
     const { r, c } = cookContext();
+    delete S.checks[r.id];
     if (r.type === 'dinner') {
       const nu = nutrition(c);
       logHistory('dinner', r.id, { protein: nu.protein, veg: vegCups(c), n: c.n });
@@ -624,10 +653,11 @@ const ACT = {
       logHistory('dessert', r.id, { n: c.pieces });
     }
     const dest = r.type === 'dinner' ? '#/tonight' : '#/sweet/' + r.id;
+    if (S.prefs.trackInventory) { const dropped = freshUsed(c); dropped.forEach(id => setInv(id, 'low')); if (dropped.length) lastDrop = dropped; }
     S.cook = null;
     save();
     location.hash = dest;
-    toast(r.type === 'dinner' ? 'Logged. Nice work.' : 'Logged.');
+    toast(lastDrop.length ? `Logged. ${lastDrop.length} ${lastDrop.length > 1 ? 'items' : 'item'} marked Low.` : (r.type === 'dinner' ? 'Logged. Nice work.' : 'Logged.'), lastDrop.length ? { label:'Undo', act:'undo-drop' } : null);
   },
 
   // onboarding
@@ -657,6 +687,7 @@ function restoreBackupText(text) {
     toast('Backup restored');
   });
 }
+let lastDrop = [];
 const CHANGE = {
   'restore-file'(el) {
     const file = el.files && el.files[0];
@@ -695,6 +726,13 @@ function deferRender() { clearTimeout(pendingRender); pendingRender = setTimeout
 function flushRender() { if (!pendingRender) return false; clearTimeout(pendingRender); pendingRender = 0; return true; }
 document.addEventListener('input', e => {
   const el = e.target;
+  if (el.dataset && el.dataset.a === 'inv-search') {
+    S.ui.invSearch = el.value.slice(0, 40);
+    save(); render();
+    const box = $('#inv-search');
+    if (box) { box.focus(); box.setSelectionRange(box.value.length, box.value.length); }
+    return;
+  }
   if (el.dataset && el.dataset.a === 'note') {
     const t = el.value.slice(0, 1000);
     if (t.trim()) S.notes[el.dataset.rid] = t; else delete S.notes[el.dataset.rid];

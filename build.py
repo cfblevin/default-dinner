@@ -12,7 +12,7 @@ shell = (src/'shell.html').read_text()
 css = (src/'styles.css').read_text()
 js = '\n'.join((src/f).read_text() for f in ['data.js','engine.js','views.js','app.js'])
 icons = dict(re.findall(r"^\s+(\w+):'(<svg[^']*</svg>)',", (src/'views.js').read_text(), re.M))
-for k in ['tonight','meals','sweet','prep','inventory']:
+for k in ['tonight','meals','sweet','prep','inventory','cart','clock']:
     shell = shell.replace(f'<!--ICON:{k}-->', icons[k])
 GOOGLE = re.search(r'<link rel="preconnect" href="https://fonts.googleapis.com">.*?display=swap">\n', shell, re.S).group(0)
 

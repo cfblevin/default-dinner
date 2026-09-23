@@ -9,6 +9,8 @@ const ICON = {
   sweet:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3"/><path d="M4.8 10.2c1.8.8 2.6-.9 4.3 0M14.8 8.6c1.4.9 2.4-.6 4 .6"/></svg>',
   prep:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="9" width="16" height="10" rx="2"/><path d="M3 9h18M8.5 5.5h7M12 12.5v3"/></svg>',
   inventory:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 6.5h10M10 12h10M10 17.5h10"/><path d="M3.8 6.4l1.3 1.3 2.2-2.4M3.8 11.9l1.3 1.3 2.2-2.4"/><circle cx="5.5" cy="17.5" r="1.2"/></svg>',
+  cart:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2.2l2.3 10.5a2 2 0 0 0 2 1.6h7.6a2 2 0 0 0 2-1.5L21 8H6.2"/><circle cx="10" cy="19.5" r="1.4"/><circle cx="17" cy="19.5" r="1.4"/></svg>',
+  clock:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>',
   gear:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg>',
   back:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>',
   star:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/></svg>',
@@ -16,12 +18,13 @@ const ICON = {
   close:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
 };
 
+const CARB_LABEL = { rice:'Rice', potato:'Potatoes', hash:'Hash browns', none:'On its own' };
 const SHORT = { korean:'Korean', mexican:'Mexican', med:'Mediterranean', bbq:'BBQ', bread:'Banana bread', brownies:'Brownies', donuts:'Donuts', icecream:'Ice cream' };
 
 /* ---------- Illustrations: bowls and dessert glyphs ---------- */
-const FOODVAR = { rice:'--f-rice', beef:'--f-beef', chicken:'--f-chicken', broccoli:'--f-broc', lettuce:'--f-leaf', beans:'--f-bean', corn:'--f-corn', spinach:'--f-spinach', cucumber:'--f-cuc', tomato:'--f-tomato', potato:'--f-potato' };
+const FOODVAR = { rice:'--f-rice', beef:'--f-beef', chicken:'--f-chicken', broccoli:'--f-broc', lettuce:'--f-leaf', beans:'--f-bean', corn:'--f-corn', spinach:'--f-spinach', cucumber:'--f-cuc', tomato:'--f-tomato', potato:'--f-potato', pasta:'--f-pasta', sauce:'--f-sauce', sausage:'--f-sausage', egg:'--f-egg', hash:'--f-hash', chili:'--f-chili', peppers:'--f-peppers' };
 function bowlSVG(r, size, carb) {
-  const segs = r.bowl.map(([k, v]) => [k === 'rice' && carb === 'potato' ? 'potato' : k, v]);
+  const segs = r.bowl.map(([k, v]) => [k === 'rice' && (carb === 'potato' || carb === 'hash') ? (carb === 'hash' ? 'hash' : 'potato') : k, v]);
   const cx = 50, cy = 50, R = 39;
   let a = -Math.PI / 2 - segs[0][1] * Math.PI;
   const paths = segs.map(([k, v]) => {
@@ -37,6 +40,8 @@ function bowlSVG(r, size, carb) {
   if (r.garnish === 'salsa') garnish = dots.slice(0, 5).map(([x, y]) => `<circle cx="${x}" cy="${y}" r="2.2" fill="var(--f-tomato)"/>`).join('');
   if (r.garnish === 'yogurt') garnish = '<path d="M38 50c4-8 18-8 22 0s-10 10-14 4 4-9 8-5" fill="none" stroke="var(--f-yogurt)" stroke-width="3.2" stroke-linecap="round"/>';
   if (r.garnish === 'bbq') garnish = '<path d="M34 46l7 6 7-7 7 7 7-6 5 4" fill="none" stroke="var(--f-bbq)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>';
+  if (r.garnish === 'sesame') garnish = dots.map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="2" ry="1.3" fill="var(--f-sesame)"/>`).join('');
+  if (r.garnish === 'parmesan') garnish = dots.map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.7" fill="var(--f-parm)"/>`).join('');
   const label = r.name + ' illustration';
   return `<svg class="bowl" width="${size}" height="${size}" viewBox="0 0 100 100" role="img" aria-label="${esc(label)}"><circle cx="50" cy="50" r="48" fill="var(--bowl)" stroke="var(--line)" stroke-width="1"/>${paths}<circle cx="50" cy="50" r="${R}" fill="none" stroke="var(--bowl-rim)" stroke-width="1"/>${garnish}</svg>`;
 }
@@ -131,7 +136,8 @@ function ingredientList(c, rid, prefix = '') {
     const note = i.note ? fill(i.note, c) : '';
     const tag = i.extra && !['Heat','Glaze'].includes(i.extra) ? `<span class="tag">${esc(i.extra)}</span>` : '';
     return `<li class="ing"><input type="checkbox" id="${id}" data-a="check" data-rid="${rid}" data-key="${esc(i.key + (i.extra || ''))}" ${checks[i.key + (i.extra || '')] ? 'checked' : ''}>
-      <label for="${id}"><span class="ing-name">${esc(i.name || itemName(i.id))}${tag}</span>${note ? `<span class="ing-note">${esc(note)}</span>` : ''}${stockBadge(a.st, a.via, (i.any || [i.id])[0])}</label>
+      <label for="${id}"><span class="ing-name">${esc(i.name || itemName(i.id))}${tag}</span>${note ? `<span class="ing-note">${esc(note)}</span>` : ''}</label>
+      ${a.st === 'out' && i.sub ? `<details class="swap" data-d="swap-${rid}-${i.key}"><summary><span class="stock out"><i aria-hidden="true">○</i> Need to buy · swap</span></summary><p class="swap-text">${esc(i.sub)}</p></details>` : `<span class="ing-stock">${stockBadge(a.st, a.via, (i.any || [i.id])[0])}</span>`}
       <span class="ing-amt mono">${esc(fmtQ(i.sq, i.u))}</span></li>`;
   }).join('')}</ul></div>`).join('');
 }
@@ -159,10 +165,7 @@ function viewTonight() {
     const cr = RECIPE[S.cook.rid];
     banners += `<button type="button" class="banner" data-a="resume"><span><strong>Resume ${esc(cr.short)}</strong><span class="muted"> · ${S.cook.i ? 'step ' + S.cook.i : 'not started yet'}</span></span>${ICON.chev}</button>`;
   }
-  if (good.length) {
-    const names = [...new Set(good.map(ct => RECIPE[ct.rid].short))].join(', ');
-    banners += `<a class="banner ready" href="#/nocook"><span><strong>${good.length} prepped ${good.length > 1 ? 'dinners' : 'dinner'} ready</strong><span class="muted"> · ${esc(names)} · heat one in 3 min</span></span>${ICON.chev}</a>`;
-  } else if (frozen.length) {
+  if (!good.length && frozen.length) {
     banners += `<a class="banner" href="#/prep/portion"><span><strong>${frozen.length} in the freezer</strong><span class="muted"> · move one to the fridge tonight for tomorrow</span></span>${ICON.chev}</a>`;
   }
   const desserts = [...DESSERTS].sort((a, b) => (S.prefs.dessert === b.id) - (S.prefs.dessert === a.id) || isFav(b.id) - isFav(a.id));
@@ -186,7 +189,7 @@ function viewTonight() {
   const words = { in:'stocked', low:'low', out:'missing' };
   const kitchen = S.prefs.trackInventory ? `<ul class="kcheck">${checkRows.map(([n, st, prepped]) =>
     `<li><span class="kc-name">${esc(n)}</span><span class="stock ${st}"><i aria-hidden="true">${st === 'in' ? '●' : st === 'low' ? '◐' : '○'}</i> ${prepped && st !== 'out' ? 'prepped' : words[st]}</span></li>`).join('')}</ul>
-    <a class="link-row" href="#/inventory">Inventory ${ICON.chev}</a>` : `<p class="muted">Inventory tracking is off. Turn it on in <a href="#/settings">Settings</a>.</p>`;
+    <a class="link-row" href="#/kitchen">Kitchen ${ICON.chev}</a>` : `<p class="muted">Inventory tracking is off. Turn it on in <a href="#/settings">Settings</a>.</p>`;
 
   const wk = weekSummary();
   const weekRow = wk.home || wk.prepared || wk.desserts
@@ -195,23 +198,36 @@ function viewTonight() {
 
   const rd = bestReadiness(r);
   const rl = readyLabel(rd);
-  return `
-  <header class="top">
-    <p class="eyebrow">${now.toLocaleDateString(undefined, { weekday:'long', month:'long', day:'numeric' })}</p>
-    <a class="icon-btn" href="#/settings" aria-label="Settings">${ICON.gear}</a>
-  </header>
-  ${banners ? `<div class="banners">${banners}</div>` : ''}
-  <h1 class="display">What are we eating tonight?</h1>
-  <article class="hero" aria-labelledby="hero-name">
+
+  // Something already cooked beats cooking again: make it the hero.
+  const first = good.slice().sort((a, b) => eatBy(a) - eatBy(b))[0];
+  const fr = first ? RECIPE[first.rid] : null;
+  const heroFridge = !first ? '' : `<article class="hero fridge" aria-labelledby="hero-name">
+    <div class="hero-top">${bowlSVG(fr, 92)}
+      <div class="hero-title">
+        <p class="kicker">In the fridge · ${good.length > 1 ? good.length + ' containers' : '1 container'}</p>
+        <h2 id="hero-name" class="hero-name">${esc(fr.name)}</h2>
+        <p class="ready-line ok">Eat by ${fmtDay(eatBy(first))} · 3–4 min in the microwave</p>
+      </div>
+    </div>
+    <div class="hero-actions">
+      <button type="button" class="btn primary xl" data-a="heat-go" data-id="${first.uid}">Heat it · 3 min</button>
+      <div class="pair">
+        <button type="button" class="btn" data-a="start-cook" data-id="${r.id}">Cook ${esc(r.short)} instead</button>
+        <a class="btn" href="#/nocook">Something else</a>
+      </div>
+    </div>
+  </article>`;
+  const heroCook = `<article class="hero" aria-labelledby="${first ? 'cook-name' : 'hero-name'}">
     <div class="hero-top">
-      ${bowlSVG(r, 92, c.carb)}
+      ${bowlSVG(r, first ? 64 : 92, c.carb)}
       <div class="hero-title">
         <p class="kicker">${esc(r.difficulty)} · ${esc(amountLabel(c))}${isFav(r.id) ? ' · <span class="fav-mark">Favorite</span>' : ''}</p>
-        <h2 id="hero-name" class="hero-name"><a href="#/meal/${r.id}">${esc(r.name)}</a></h2>
+        <h2 id="${first ? 'cook-name' : 'hero-name'}" class="hero-name"><a href="#/meal/${r.id}">${esc(r.name)}</a></h2>
         ${rl.text ? `<p class="ready-line ${rl.cls}">${esc(rl.text)}</p>` : ''}
       </div>
     </div>
-    <p class="portion mono">${esc(main.join(' · '))}</p>
+    ${first ? '' : `<p class="portion mono">${esc(main.join(' · '))}</p>
     ${dinnerStats(nu, tm)}
     <p class="fine">Approximate nutrition, per ${c.mode === 'amount' ? 'plate' : 'serving'}.</p>
     <div class="hero-actions">
@@ -220,11 +236,21 @@ function viewTonight() {
         <button type="button" class="btn" data-a="switch">Switch meal</button>
         <a class="btn" href="#/nocook">I don’t want to cook</a>
       </div>
-      <button type="button" class="text-btn" data-a="surprise">Surprise me</button>
-    </div>
-  </article>
+    </div>`}
+  </article>`;
+  const bananaNudge = S.prefs.trackInventory && inv('bananas') !== 'out' && inv('p_bananas') === 'out'
+    ? `<div class="nudge"><span>Slice a banana into the freezer tonight and ice cream is 8 minutes away tomorrow.</span><button type="button" class="btn small" data-a="freeze-bananas">Done, they’re in</button></div>` : '';
+  return `
+  <header class="top">
+    <p class="eyebrow">${now.toLocaleDateString(undefined, { weekday:'long', month:'long', day:'numeric' })}</p>
+    <span class="top-actions"><button type="button" class="icon-btn" data-a="timer-open" aria-label="Kitchen timer">${ICON.clock}</button><a class="icon-btn" href="#/settings" aria-label="Settings">${ICON.gear}</a></span>
+  </header>
+  ${S.timer ? `<div class="banners"><div class="banner timer-banner"><span><strong>${esc(S.timer.label)}</strong> <span class="mono" id="timer-left">${fmtSec((S.timer.end - Date.now()) / 1000)}</span></span><button type="button" class="text-btn" data-a="timer-stop">Stop</button></div></div>` : ''}
+  ${banners ? `<div class="banners">${banners}</div>` : ''}
+  <h1 class="display">${first ? 'Dinner’s already made.' : 'What are we eating tonight?'}</h1>
+  ${first ? heroFridge + `<div class="sec cook-instead"><p class="label">Or cook tonight</p>${heroCook}</div>` : heroCook}
 
-  ${section('Want something sweet?', `<ul class="drows">${sweet}</ul><button type="button" class="text-btn" data-a="surprise-dessert">Surprise dessert</button>`)}
+  ${section('Want something sweet?', `<ul class="drows">${sweet}</ul>${bananaNudge}`)}
   ${section('Kitchen check', kitchen)}
   <div class="sec">${weekRow}</div>`;
 }
@@ -244,7 +270,6 @@ function sheetSwitch() {
         ${rl.text ? `<span class="ready-line ${rl.cls}">${esc(rl.text)}</span>` : ''}</span>
         ${r.id === cur ? '<span class="tag">Tonight</span>' : ''}</button></li>`;
     }).join('')}</ul>
-    <button type="button" class="btn wide" data-a="surprise">Surprise me</button>
   </div>`;
 }
 
@@ -277,19 +302,29 @@ function missingButtons(id) {
 }
 
 /* ---------- MEALS ---------- */
-function viewMeals() {
-  const rows = DINNERS.map(r => {
-    const c = build(r);
-    const nu = nutrition(c), tm = times(c);
-    const rl = readyLabel(bestReadiness(r));
-    return `<li class="mrow"><a class="mrow-main" href="#/meal/${r.id}">${bowlSVG(r, 56, c.carb)}<span class="mrow-body">
-      <span class="mrow-name">${esc(r.name)}</span>
-      <span class="meta">~${roundKcal(nu.kcal)} kcal · ${roundG(nu.protein)} g protein · ${tm.total} min</span>
-      ${rl.text ? `<span class="ready-line ${rl.cls}">${esc(rl.text)}</span>` : ''}</span></a>${favBtn(r.id, r.name)}</li>`;
-  }).join('');
+function mealRow(r, art) {
+  const c = build(r, r.type === 'dessert' ? { tier:'base' } : {});
+  const nu = nutrition(c), tm = times(c);
+  const rl = readyLabel(bestReadiness(r));
+  const href = r.type === 'dinner' ? '#/meal/' + r.id : '#/sweet/' + r.id;
+  const time = r.type === 'dinner' ? tm.total + ' min' : (r.bakes ? fmtDur(tm.active + tm.bake) : fmtDur(tm.total));
+  return `<li class="mrow"><a class="mrow-main" href="${href}">${art}<span class="mrow-body">
+    <span class="mrow-name">${esc(r.name)}</span>
+    <span class="meta">~${roundKcal(nu.kcal)} kcal · ${roundG(nu.protein)} g protein · ${time}</span>
+    ${rl.text ? `<span class="ready-line ${rl.cls}">${esc(rl.text)}</span>` : ''}</span></a>${favBtn(r.id, r.name)}</li>`;
+}
+function viewMeals(kind) {
+  kind = kind === 'sweet' ? 'sweet' : 'dinners';
+  const list = kind === 'sweet'
+    ? DESSERTS.map(r => mealRow(r, glyphSVG(r, 52))).join('')
+    : DINNERS.map(r => mealRow(r, bowlSVG(r, 56, getOpts(r).carb))).join('');
   return `
-  <header class="page-head"><h1 class="h1">Meals</h1><button type="button" class="btn small" data-a="surprise-go">Surprise me</button></header>
-  <ul class="mrows">${rows}</ul>`;
+  <header class="page-head"><h1 class="h1">Meals</h1></header>
+  <nav class="tabs" aria-label="Meal types">
+    <a href="#/meals" ${kind === 'dinners' ? 'aria-current="page"' : ''}>Dinners</a>
+    <a href="#/sweet" ${kind === 'sweet' ? 'aria-current="page"' : ''}>Sweet</a>
+  </nav>
+  <ul class="mrows">${list}</ul>`;
 }
 
 function viewMeal(id) {
@@ -316,7 +351,7 @@ function viewMeal(id) {
   const visibleOpts = [
     `<div class="opt"><span class="opt-label">Servings</span>${seg('Servings', [[1,'1'],[2,'2'],[4,'4'],[6,'6'],['amount','I have…']], o.mode === 'amount' ? 'amount' : o.servings, 'opt', `data-rid="${id}" data-k="servings"`)}${amountBox}</div>`,
     r.hasCut ? `<div class="opt"><span class="opt-label">Chicken</span>${seg('Chicken', [['breast','Breast'],['thigh','Thighs']], o.cut, 'opt', `data-rid="${id}" data-k="cut"`)}</div>` : '',
-    r.hasCarbChoice ? `<div class="opt"><span class="opt-label">Carb</span>${seg('Carb', [['rice','Rice'],['potato','Potatoes']], o.carb, 'opt', `data-rid="${id}" data-k="carb"`)}</div>` : '',
+    (r.carbs && r.carbs.length > 1) ? `<div class="opt"><span class="opt-label">${r.id === 'chili' ? 'Serve it' : 'Carb'}</span>${seg('Carb', r.carbs.map(k => [k, CARB_LABEL[k]]), o.carb, 'opt', `data-rid="${id}" data-k="carb"`)}</div>` : '',
     r.hasSauceChoice ? `<div class="opt"><span class="opt-label">BBQ sauce</span>${seg('BBQ sauce', [['regular','Regular'],['smoky','Smoky'],['spicy','Spicy']], o.sauce, 'opt', `data-rid="${id}" data-k="sauce"`)}</div>` : '',
   ].join('');
   const moreOpts = `<details class="more more-opts" data-d="opts"><summary>More options</summary><div class="opts">
@@ -358,21 +393,6 @@ function viewMeal(id) {
 }
 
 /* ---------- SWEET ---------- */
-function viewSweet() {
-  const rows = DESSERTS.map(r => {
-    const c = build(r, { tier:'base' });
-    const nu = nutrition(c), tm = times(c);
-    const rl = readyLabel(bestReadiness(r));
-    return `<li class="mrow"><a class="mrow-main" href="#/sweet/${r.id}">${glyphSVG(r, 52)}<span class="mrow-body">
-      <span class="mrow-name">${esc(r.name)}</span>
-      <span class="meta">~${roundKcal(nu.kcal)} kcal · ${roundG(nu.protein)} g protein · ${r.bakes ? fmtDur(tm.active + tm.bake) : fmtDur(tm.total)}</span>
-      ${rl.text ? `<span class="ready-line ${rl.cls}">${esc(rl.text)}</span>` : ''}</span></a>${favBtn(r.id, r.name)}</li>`;
-  }).join('');
-  return `
-  <header class="page-head"><h1 class="h1">Sweet</h1><button type="button" class="btn small" data-a="surprise-dessert">Surprise me</button></header>
-  <ul class="mrows">${rows}</ul>`;
-}
-
 function viewDessert(id) {
   const r = RECIPE[id];
   if (!r || r.type !== 'dessert') return emptyState('That dessert isn’t here.', '', '<a class="btn" href="#/sweet">See desserts</a>');
@@ -443,11 +463,11 @@ function stepper(label, value, act, attrs, display) {
 }
 
 function viewPrep(tab) {
-  tab = ['dinners','ingredients','bake','portion'].includes(tab) ? tab : (S.ui.prepTab || 'dinners');
+  tab = ['dinners','bake','portion'].includes(tab) ? tab : (['dinners','bake','portion'].includes(S.ui.prepTab) ? S.ui.prepTab : 'dinners');
   S.ui.prepTab = tab;
-  const tabs = [['dinners','Dinners'],['ingredients','Ingredients'],['bake','Bake'],['portion','Portion']];
+  const tabs = [['dinners','Dinners'],['bake','Bake'],['portion','Portion']];
   const nav = `<nav class="tabs" aria-label="Prep sections">${tabs.map(([k, l]) => `<a href="#/prep/${k}" ${k === tab ? 'aria-current="page"' : ''}>${l}</a>`).join('')}</nav>`;
-  const body = tab === 'dinners' ? prepDinners() : tab === 'ingredients' ? prepComponents() : tab === 'bake' ? prepBake() : prepPortion();
+  const body = tab === 'dinners' ? prepDinners() : tab === 'bake' ? prepBake() : prepPortion();
   return `${backLink('#/settings', 'Settings')}<header class="page-head"><h1 class="h1">Meal prep</h1></header>${nav}${body}`;
 }
 
@@ -568,52 +588,69 @@ function prepPortion() {
 }
 
 /* ---------- INVENTORY ---------- */
-function viewInventory(tab) {
-  tab = ['kitchen','shopping'].includes(tab) ? tab : (S.ui.invTab === 'shopping' ? 'shopping' : 'kitchen');
-  S.ui.invTab = tab;
-  const open = S.shopping.filter(x => !x.checked).length;
-  const tabs = [['kitchen','Kitchen'],['shopping','Shopping' + (open ? ' · ' + open : '')]];
-  const nav = `<nav class="tabs" aria-label="Inventory sections">${tabs.map(([k, l]) => `<a href="#/inventory/${k}" ${k === tab ? 'aria-current="page"' : ''}>${l}</a>`).join('')}</nav>`;
-  let body;
-  if (!S.prefs.trackInventory && tab === 'kitchen') body = emptyState('Inventory tracking is off.', 'Recipes won’t show stock status, and shopping lists won’t know what you have.', '<button type="button" class="btn" data-a="pref-toggle" data-k="trackInventory">Turn it on</button>');
-  else body = tab === 'kitchen' ? invKitchen() : invShopping();
-  return `<header class="page-head"><h1 class="h1">Inventory</h1></header>${nav}${body}`;
+function viewKitchen() {
+  const body = S.prefs.trackInventory ? invKitchen()
+    : emptyState('Inventory tracking is off.', 'Recipes won’t show stock status, and shopping lists won’t know what you have.', '<button type="button" class="btn" data-a="pref-toggle" data-k="trackInventory">Turn it on</button>');
+  return `<header class="page-head"><h1 class="h1">Kitchen</h1><a class="btn small" href="#/shopping">Shopping list</a></header>${body}`;
+}
+function viewShopping() {
+  return `<header class="page-head"><h1 class="h1">Shopping</h1><a class="btn small" href="#/kitchen">Kitchen</a></header>${invShopping()}`;
 }
 
 function invKitchen() {
+  const fresh = ITEMS.filter(i => i.fresh && !i.prepped);
   const counts = { in:0, low:0, out:0 };
-  ITEMS.filter(i => !i.prepped).forEach(i => counts[inv(i.id)]++);
+  fresh.forEach(i => counts[inv(i.id)]++);
   const f = S.ui.invFilter;
-  const isEmpty = counts.in + counts.low === 0;
-  const empty = isEmpty ? emptyState('Your kitchen is empty.', 'Open a category and tap what you have, or start from tonight’s dinner.',
+  const term = (S.ui.invSearch || '').trim().toLowerCase();
+  const isEmpty = ITEMS.filter(i => !i.prepped).every(i => inv(i.id) === 'out');
+  const empty = isEmpty ? emptyState('Your kitchen is empty.', 'Tap what you have, or start from tonight’s dinner.',
     '<div class="btn-row center"><button type="button" class="btn primary" data-a="build-list">Build shopping list</button><button type="button" class="btn" data-a="basics">I have the basics</button></div>') : '';
-  const cats = CATS.map(cat => {
-    const all = ITEMS.filter(i => i.cat === cat.id || i.alsoCat === cat.id);
-    const list = f === 'all' ? all : all.filter(i => inv(i.id) === f);
-    if (!list.length) return '';
-    const low = all.filter(i => inv(i.id) === 'low').length, out = all.filter(i => inv(i.id) === 'out').length;
-    const status = cat.id === 'prepped'
-      ? (all.length - out ? (all.length - out) + ' ready' : 'none')
-      : [low ? low + ' low' : '', out ? out + ' out' : ''].filter(Boolean).join(' · ') || 'all stocked';
-    const rows = list.map(i => {
-      const st = inv(i.id);
-      const word = st === 'in' ? 'In stock' : st === 'low' ? 'Low' : 'Out';
-      const date = i.prepped && st !== 'out' && S.invDates[i.id] ? `<span class="inv-used">Cooked ${fmtDay(S.invDates[i.id])}</span>` : '';
-      return `<li><button type="button" class="inv-row" data-a="inv" data-id="${i.id}" aria-label="${esc(i.name)}: ${word}. Tap to change.">
-        <span class="inv-body"><span class="inv-name">${esc(i.name)}</span>${date}</span>
-        <span class="pill ${st}"><i aria-hidden="true">${st === 'in' ? '●' : st === 'low' ? '◐' : '○'}</i>${word}</span></button></li>`;
-    }).join('');
-    return `<details class="inv-cat" data-d="inv-${cat.id}"${f !== 'all' ? ' open' : ''}><summary><span class="inv-cat-name">${cat.name}</span><span class="inv-cat-status ${out ? 'out' : low ? 'low' : 'in'}">${status}</span></summary><ul class="inv">${rows}</ul></details>`;
+  const row = i => {
+    const st = inv(i.id);
+    const word = st === 'in' ? 'In stock' : st === 'low' ? 'Low' : 'Out';
+    const date = i.prepped && st !== 'out' && S.invDates[i.id] ? `<span class="inv-used">Since ${fmtDay(S.invDates[i.id])}</span>` : '';
+    return `<li><button type="button" class="inv-row" data-a="inv" data-id="${i.id}" aria-label="${esc(i.name)}: ${word}. Tap to change.">
+      <span class="inv-body"><span class="inv-name">${esc(i.name)}</span>${date}</span>
+      <span class="pill ${st}"><i aria-hidden="true">${st === 'in' ? '●' : st === 'low' ? '◐' : '○'}</i>${word}</span></button></li>`;
+  };
+  const match = i => (!term || i.name.toLowerCase().includes(term)) && (f === 'all' || inv(i.id) === f);
+  if (term) {
+    const hits = ITEMS.filter(match);
+    return `${searchBox(term)}${hits.length ? `<ul class="inv">${hits.map(row).join('')}</ul>` : emptyState('Nothing matches “' + esc(term) + '”.', '')}`;
+  }
+  const group = (title, list, hint, open) => {
+    const shown = list.filter(match);
+    if (!shown.length) return '';
+    const low = list.filter(i => inv(i.id) === 'low').length, out = list.filter(i => inv(i.id) === 'out').length;
+    const status = [low ? low + ' low' : '', out ? out + ' out' : ''].filter(Boolean).join(' · ') || 'all stocked';
+    return `<details class="inv-cat" data-d="invg-${title}"${open ? ' open' : ''}><summary><span class="inv-cat-name">${title}</span><span class="inv-cat-status ${out ? 'out' : low ? 'low' : 'in'}">${status}</span></summary>
+      ${hint ? `<p class="fine">${hint}</p>` : ''}<ul class="inv">${shown.map(row).join('')}</ul></details>`;
+  };
+  const prepped = ITEMS.filter(i => i.prepped);
+  const pantryCats = CATS.filter(c => c.id !== 'prepped').map(cat => {
+    const list = ITEMS.filter(i => (i.cat === cat.id || i.alsoCat === cat.id) && !i.fresh);
+    return list.length ? group(cat.name, list, '', f !== 'all') : '';
   }).join('');
   return `
-  <div class="inv-summary"><span><strong class="mono">${counts.in}</strong> in stock</span><span><strong class="mono">${counts.low}</strong> low</span><span><strong class="mono">${counts.out}</strong> out</span></div>
+  ${searchBox(term)}
+  <div class="inv-summary"><span><strong class="mono">${counts.in}</strong> fresh in stock</span><span><strong class="mono">${counts.low}</strong> low</span><span><strong class="mono">${counts.out}</strong> out</span></div>
   ${seg('Show', [['all','All'],['low','Running low'],['out','Need to buy']], f, 'inv-filter')}
-  <p class="fine">Tap an item to cycle: In stock → Low → Out. Spices, oil, vanilla and baking powder count as in stock unless you mark them.</p>
   ${empty}
-  <div class="inv-cats">${cats || emptyState(f === 'low' ? 'Nothing is running low.' : 'Nothing is out.', '')}</div>
+  <div class="inv-cats">
+    ${group('Fresh', fresh, 'The things that run out. Worth a glance before you shop.', f === 'all' || undefined)}
+    ${prepped.some(i => inv(i.id) !== 'out') || f !== 'all' ? group('Already cooked', prepped, 'Set by cooking ahead.', false) : ''}
+    <p class="label">Pantry · set once</p>
+    <p class="fine">Spices, oil, vanilla and baking powder count as in stock unless you mark them.</p>
+    ${pantryCats}
+  </div>
   <div class="danger-zone"><button type="button" class="text-btn" data-a="reset-inv">Reset inventory</button></div>`;
 }
-
+function searchBox(term) {
+  return `<form class="search" data-a="noop" onsubmit="return false"><label for="inv-search" class="visually-hidden">Search the kitchen</label>
+    <input id="inv-search" type="search" inputmode="search" placeholder="Search ingredients" autocomplete="off" value="${esc(term)}" data-a="inv-search">
+    ${term ? '<button type="button" class="text-btn" data-a="inv-search-clear">Clear</button>' : ''}</form>`;
+}
 function invShopping() {
   const needs = mergeNeeds(shoppingNeeds());
   const onList = new Set(S.shopping.map(x => x.id));
@@ -631,7 +668,8 @@ function invShopping() {
   const basedOn = srcList.filter(([k]) => S.shopSources[k] && !(k === 'week' && !weekTotal) && !(k === 'tonight' && S.shopSources.week && weekTotal)).map(([, l]) => l.split(/[:(]/)[0].trim().toLowerCase()).join(', ') || 'nothing selected';
   const weekHTML = `<details class="week-plan" data-d="week-plan"${weekTotal ? ' open' : ''}><summary><span class="week-title">This week’s dinners</span><span class="week-count">${weekTotal ? weekTotal + ' planned' : 'Plan ahead'}</span></summary>
     <ul class="split">${DINNERS.map(r => `<li class="split-row">${bowlSVG(r, 32, getOpts(r).carb)}<span class="split-name">${esc(r.short)}</span>${stepper(r.short + ' this week', week[r.id] || 0, 'week-step', `data-id="${r.id}"`)}</li>`).join('')}</ul>
-    <p class="fine">Each one is a standard serving. The list covers these instead of just tonight. Resets every Monday.${weekTotal ? ` <button type="button" class="text-btn inline" data-a="week-clear">Clear</button>` : ''}</p></details>`;
+    <p class="fine">Each one is a standard serving. The list covers these instead of just tonight. Resets every Monday.${weekTotal ? ` <button type="button" class="text-btn inline" data-a="week-clear">Clear</button>` : ''}</p>
+    ${!weekTotal && sum(Object.values(lastWeekCounts())) ? `<button type="button" class="btn small" data-a="week-same">Same as last week (${sum(Object.values(lastWeekCounts()))} dinners)</button>` : ''}</details>`;
   const sources = `<details class="more" data-d="shop-sources"><summary>Based on ${esc(basedOn)}</summary><ul class="checks">${srcList.map(([k, l]) =>
     `<li><input type="checkbox" id="src-${k}" data-a="shop-src" data-k="${k}" ${S.shopSources[k] ? 'checked' : ''}><label for="src-${k}">${esc(l)}</label></li>`).join('')}</ul></details>`;
   const addBtn = !S.prefs.trackInventory ? '' : toAdd
@@ -651,7 +689,7 @@ function invShopping() {
       return `<li class="${x.checked ? 'done' : ''}"><input type="checkbox" id="${id}" data-a="shop-check" data-id="${esc(x.id)}" ${x.checked ? 'checked' : ''}><label for="${id}"><span class="shop-name">${esc(name)}</span>${qty ? `<span class="shop-qty mono">${esc(qty)}</span>` : ''}</label></li>`;
     }).join('')}</ul>`).join('');
     const checked = list.filter(x => x.checked).length;
-    listHTML += `<div class="btn-row">${checked ? `<button type="button" class="btn small primary" data-a="shop-putaway">Put away ${checked} (mark in stock)</button>` : ''}<button type="button" class="text-btn" data-a="shop-clear">Clear list</button></div>`;
+    listHTML += `<div class="btn-row">${checked ? `<button type="button" class="btn small primary" data-a="shop-putaway">Put away ${checked} (mark in stock)</button>` : ''}<button type="button" class="btn small" data-a="shop-copy">Copy list</button><button type="button" class="text-btn" data-a="shop-clear">Clear list</button></div>`;
   }
   return `
   ${weekHTML}
@@ -698,7 +736,8 @@ function viewNoCook() {
   <header class="page-head"><h1 class="h1">Five-minute mode</h1></header>
   ${good.length ? section('Ready to heat', readyHTML) : ''}
   ${frozen.length ? `<p class="callout"><strong>${frozen.length} in the freezer.</strong> Move one to the fridge tonight for tomorrow. <a href="#/prep/portion">Manage</a></p>` : ''}
-  ${section(showAll ? 'Closest options' : 'You can make these now', (showAll ? '<p class="muted">Nothing is fully ready with what’s marked in your kitchen. These need the fewest things.</p>' : '') + quickHTML)}`;
+  ${section(showAll ? 'Closest options' : 'Assemble something', (showAll && !good.length ? '<p class="muted">Nothing is fully ready with what’s marked in your kitchen. These need the fewest things.</p>' : '') + quickHTML)}
+  <div class="sec order-out"><p class="muted">Not tonight?</p><button type="button" class="btn wide" data-a="order-out">Ordering tonight</button><p class="fine">Logs it and moves on. No judgment — knowing how often it happens is the useful part.</p></div>`;
 }
 
 /* ---------- WEEK ---------- */

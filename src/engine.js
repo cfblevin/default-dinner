@@ -29,7 +29,7 @@ function defaultState() {
     v: 2,
     onboarded: false,
     prefs: { portion:'standard', protein:'any', carb:'rice', heat:'mild', dessert:'any', theme:'system',
-             autoRecommend:true, nutritionProminent:true, trackInventory:true, defaultMeal:'korean', chickenCut:'breast' },
+             autoRecommend:true, nutritionProminent:false, trackInventory:true, defaultMeal:'korean', chickenCut:'breast' },
     inv: {},
     invDates: {},
     shopping: [],
@@ -44,9 +44,10 @@ function defaultState() {
     containers: [],
     history: [],
     notes: {},
+    timer: null,
     weekPlan: { start:0, counts:{} },
     lastBackup: 0,
-    ui: { prepTab:'dinners', invTab:'kitchen', invFilter:'all', rtabs:{} },
+    ui: { prepTab:'dinners', invTab:'kitchen', invFilter:'all', invSearch:'', rtabs:{} },
   };
 }
 
@@ -66,9 +67,12 @@ function loadState() {
   Object.keys(out.ui.rtabs).forEach(k => { if (typeof out.ui.rtabs[k] !== 'string') delete out.ui.rtabs[k]; });
   if (!['all','low','out'].includes(out.ui.invFilter)) out.ui.invFilter = 'all';
   if (!['kitchen','shopping'].includes(out.ui.invTab)) out.ui.invTab = 'kitchen';
+  if (typeof out.ui.invSearch !== 'string') out.ui.invSearch = '';
   if (!isObj(out.notes)) out.notes = {};
   Object.keys(out.notes).forEach(k => { if (!RECIPE[k] || typeof out.notes[k] !== 'string') delete out.notes[k]; });
   if (!isObj(out.weekPlan) || !isObj(out.weekPlan.counts) || typeof out.weekPlan.start !== 'number') out.weekPlan = { start:0, counts:{} };
+  if (!isObj(out.weekPlan.last)) out.weekPlan.last = {};
+  if (out.timer && (!isObj(out.timer) || typeof out.timer.end !== 'number')) out.timer = null;
   if (typeof out.lastBackup !== 'number' || !isFinite(out.lastBackup)) out.lastBackup = 0;
   out.shopSources = Object.assign(fresh.shopSources, isObj(s.shopSources) ? s.shopSources : {});
   ['inv','invDates','opts','checks'].forEach(k => { if (!isObj(out[k])) out[k] = {}; });
@@ -195,7 +199,7 @@ function getOpts(r) {
   const o = Object.assign({}, saved);
   if (!['base','better','loaded'].includes(o.tier)) o.tier = 'base';
   if (r.type === 'dinner') {
-    o.servings = SERVING_OPTS.includes(+o.servings) ? +o.servings : 1;
+    o.servings = SERVING_OPTS.includes(+o.servings) ? +o.servings : (r.defaultServings || 1);
     o.mode = o.mode === 'amount' ? 'amount' : 'servings';
     o.amountUnit = o.amountUnit === 'oz' ? 'oz' : 'lb';
     const prot = r.ingredients.find(i => i.role === 'protein');
@@ -203,7 +207,8 @@ function getOpts(r) {
     o.plates = Number.isInteger(+o.plates) && +o.plates >= 1 && +o.plates <= 6 ? +o.plates : null;
     o.cut = r.hasCut ? (['breast','thigh'].includes(o.cut) ? o.cut : chickenCut()) : 'breast';
     if (o.mode === 'amount' && o.amountDate !== dayKey()) { o.mode = 'servings'; o.plates = null; }
-    o.carb = r.hasCarbChoice ? (['rice','potato'].includes(o.carb) ? o.carb : (S.prefs.carb === 'potato' ? 'potato' : 'rice')) : 'rice';
+    const carbs = r.carbs || ['rice'];
+    o.carb = carbs.includes(o.carb) ? o.carb : (r.defaultCarb || (carbs.includes(S.prefs.carb) ? S.prefs.carb : carbs[0]));
     if (!['fresh','ready'].includes(o.rice)) o.rice = S.prefs.trackInventory && ['in','low'].includes(S.inv.p_rice) ? 'ready' : 'fresh';
     if (r.hasSauceChoice && !['regular','smoky','spicy'].includes(o.sauce)) o.sauce = S.prefs.heat === 'mild' ? 'regular' : 'spicy';
   } else {
@@ -229,6 +234,8 @@ function cond(expr, c) {
     if (t === 'ready') return c.carb === 'rice' && c.rice === 'ready';
     if (t === 'rice') return c.carb === 'rice';
     if (t === 'potato') return c.carb === 'potato';
+    if (t === 'hash') return c.carb === 'hash';
+    if (t === 'nocarb') return c.carb === 'none';
     if (t === 'loaded') return c.tier === 'loaded';
     if (t === 'better') return c.tier !== 'base';
     if (t === 'glazed') return !!(c.g && c.g.id !== 'none');
@@ -326,7 +333,8 @@ function nutrition(c) {
   c.ings.forEach(i => {
     const n = NUT[i.nutId || i.id];
     if (!n) return;
-    for (let k = 0; k < t.length; k++) t[k] += n[k] * i.sg / 100;
+    const f = i.nutFactor == null ? 1 : i.nutFactor; // e.g. pasta-water salt, most of which drains
+    for (let k = 0; k < t.length; k++) t[k] += n[k] * i.sg * f / 100;
   });
   const out = {};
   NUT_KEYS.forEach((k, idx) => { out[k] = t[idx] / (c.pieces || 1); });
@@ -369,7 +377,8 @@ function fill(text, c) {
           return s;
         }
         case 'sauceStyle': return c.sauce === 'smoky' ? ' and {q:smokyBoost} extra smoked paprika' : c.sauce === 'spicy' ? ' and {q:hotsauce} hot sauce' : '';
-        case 'carbName': return c.carb === 'potato' ? 'Crispy potatoes' : 'Rice';
+        case 'carbName': return c.carb === 'potato' ? 'Crispy potatoes' : c.carb === 'hash' ? 'Crispy hash browns' : 'Rice';
+        case 'chiliBase': return c.carb === 'rice' ? 'Rice in the bowl first, then the chili over it. ' : c.carb === 'hash' ? 'Hash browns in the bowl, chili spooned over them so they stay crisp at the edges. ' : 'Chili straight into a deep bowl. ';
         case 'mix': return (c.v && c.v.mix) || 'No mix-ins for this version — move on.';
         case 'fill': return (c.v && c.v.fill) || '';
         case 'blend': return (c.v && c.v.blend) || '';
@@ -560,7 +569,11 @@ function readyLabel(rd) {
   if (!S.prefs.trackInventory) return { cls:'', text:'' };
   const names = list => list.length <= 2 ? list.map(i => lcName(i)).join(' and ') : list.length + ' items';
   if (rd.level === 'ready') return { cls:'ok', text: rd.low.length ? 'Ready · low on ' + names(rd.low) : 'Ready to make' };
-  if (rd.level === 'almost') return { cls:'warn', text:'Missing ' + names(rd.missing) };
+  if (rd.level === 'almost') {
+    const skippable = rd.missing.every(i => i.sub || i.opt);
+    if (skippable) return { cls:'ok', text:'Ready — ' + names(rd.missing) + (rd.missing.length > 1 ? ' are' : ' is') + ' skippable' };
+    return { cls:'warn', text:'Missing ' + names(rd.missing) };
+  }
   return { cls:'bad', text:'Missing ' + names(rd.missingCore.concat(rd.missing)) };
 }
 const SHORT_NAMES = { beef:'Ground beef', chicken:'Chicken', rice:'Rice', ricepouch:'Rice pouches', potatoes:'Potatoes', oats:'Oat flour', broccoli:'Broccoli',
@@ -596,6 +609,22 @@ function quickIngs(q) {
 function quickContext(q) {
   return { ings: quickIngs(q).filter(i => !i.opt || avail(i).st !== 'out').map(i => Object.assign({}, i, { sq:i.q, sg:i.g })), pieces:1 };
 }
+
+// Fresh things a cook just used: what's worth updating in the kitchen afterwards.
+function usedItems(c) {
+  const seen = new Set(), out = [];
+  c.ings.forEach(i => {
+    if (i.opt || (i.extra === 'Heat' && c.heat === 'mild')) return;
+    const a = avail(i);
+    const id = a.st !== 'out' ? a.via : altIds(i)[0];
+    const it = ITEM[id];
+    if (seen.has(id) || !it || it.staple) return;
+    seen.add(id);
+    out.push(id);
+  });
+  return out;
+}
+function freshUsed(c) { return usedItems(c).filter(id => ITEM[id].fresh && inv(id) === 'in'); }
 
 /* ---------- Tonight ---------- */
 const isFav = id => S.favorites.includes(id);
@@ -663,10 +692,22 @@ function weekStart(t = Date.now()) {
   d.setDate(d.getDate() - back);
   return d.getTime();
 }
-function weekCounts() { return S.weekPlan && S.weekPlan.start === weekStart() ? S.weekPlan.counts : {}; }
+function weekCounts() {
+  if (!S.weekPlan || S.weekPlan.start === weekStart()) return (S.weekPlan && S.weekPlan.counts) || {};
+  // a new week: keep what was planned last week so it can be reused in one tap
+  const last = sum(Object.values(S.weekPlan.counts || {})) ? S.weekPlan.counts : S.weekPlan.last;
+  S.weekPlan = { start: weekStart(), counts:{}, last: last || {} };
+  save();
+  return S.weekPlan.counts;
+}
+function lastWeekCounts() { weekCounts(); return (S.weekPlan && S.weekPlan.last) || {}; }
 function setWeekCount(id, n) {
   const counts = Object.assign({}, weekCounts(), { [id]: clamp(n, 0, 7) });
-  S.weekPlan = { start: weekStart(), counts };
+  S.weekPlan = Object.assign({}, S.weekPlan, { start: weekStart(), counts });
+  save();
+}
+function setWeekCounts(counts) {
+  S.weekPlan = Object.assign({}, S.weekPlan, { start: weekStart(), counts: Object.assign({}, counts) });
   save();
 }
 function cookedThisWeek(rid) {
@@ -708,20 +749,21 @@ function containerContents(r) {
 
 /* ---------- Prep plan ---------- */
 function prepCount() { const d = S.prep.days; return d === 'custom' ? clamp(+S.prep.custom || 1, 1, 14) : clamp(+d || 4, 1, 14); }
+const PREP_DINNERS = () => DINNERS.filter(r => r.prepable);
 function autoSplit(n) {
-  const order = [...DINNERS].sort((a, b) => (isFav(b.id) ? 1 : 0) - (isFav(a.id) ? 1 : 0));
-  const sp = {}; DINNERS.forEach(r => { sp[r.id] = 0; });
+  const order = [...PREP_DINNERS()].sort((a, b) => (isFav(b.id) ? 1 : 0) - (isFav(a.id) ? 1 : 0));
+  const sp = {}; PREP_DINNERS().forEach(r => { sp[r.id] = 0; });
   for (let i = 0; i < n; i++) sp[order[i % order.length].id]++;
   return sp;
 }
 function prepSplit() {
   const n = prepCount();
   const sp = S.prep.split;
-  if (isObj(sp) && DINNERS.every(r => Number.isInteger(sp[r.id]) && sp[r.id] >= 0) && sum(DINNERS.map(r => sp[r.id])) === n) return sp;
+  if (isObj(sp) && PREP_DINNERS().every(r => Number.isInteger(sp[r.id]) && sp[r.id] >= 0) && sum(PREP_DINNERS().map(r => sp[r.id])) === n) return sp;
   return autoSplit(n);
 }
 function planBuilds(split) {
-  return DINNERS.filter(r => split[r.id] > 0).map(r => build(r, { servings: split[r.id], tier:'base', rice:'fresh' }));
+  return PREP_DINNERS().filter(r => split[r.id] > 0).map(r => build(r, { servings: split[r.id], tier:'base', rice:'fresh' }));
 }
 
 function aggregate(builds) {

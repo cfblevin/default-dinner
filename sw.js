@@ -2,7 +2,7 @@
    Keeps a copy of the whole app on the device. The version string changes
    with every build, so a new build is downloaded in the background the next
    time the phone is online and used from the following launch. */
-const VERSION = 'ceb6e55f4ba6';
+const VERSION = '1db8d634c917';
 const CACHE = 'default-dinner-' + VERSION;
 const PAGE = './index.html';
 const ASSETS = ["./", "./index.html", "./manifest.webmanifest", "./fonts/ibm-plex-mono-400.woff2", "./fonts/ibm-plex-mono-500.woff2", "./fonts/ibm-plex-mono-600.woff2", "./fonts/schibsted-grotesk.woff2", "./icons/icon-180.png", "./icons/icon-192.png", "./icons/icon-512.png", "./icons/icon-maskable-512.png"];
