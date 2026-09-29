@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="app-version" content="ce70e5d0ac13">
+<meta name="app-version" content="e6bdd0ce7532">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -651,6 +651,22 @@ body.cooking .toast { bottom:calc(110px + var(--safe-b)); }
 .cart .shop { border-top:1px solid var(--line); }
 .cart .shop li:last-child { border-bottom:0; }
 .btn-row.end { justify-content:flex-end; gap:14px; margin-top:14px; }
+
+/* ---------- Your day ---------- */
+.day { margin-top:12px; padding:12px 14px 10px; border:1px solid var(--line); border-radius:14px; background:var(--surface); display:grid; gap:7px; }
+.day-head { display:flex; justify-content:space-between; align-items:baseline; gap:10px; }
+.day-head .fine { margin-top:0; }
+.day-row { display:grid; grid-template-columns:52px 1fr auto; gap:10px; align-items:center; }
+.day-k { font-size:13px; font-weight:650; color:var(--ink-2); }
+.day-bar { height:8px; border-radius:999px; background:var(--surface-2); overflow:hidden; }
+.day-bar i { display:block; height:100%; border-radius:999px; background:var(--ink); }
+.day-row.prot .day-bar i { background:var(--ok); }
+.day-v { font-size:12.5px; white-space:nowrap; }
+.day-line { font-size:14px; color:var(--ink); margin-top:2px; max-width:38em; }
+.day-edit { font-size:13px; font-weight:600; text-decoration:none; justify-self:start; min-height:32px; display:inline-flex; align-items:center; }
+.you .set-row { padding:10px 0; }
+.you .set-row:last-of-type { border-bottom:0; }
+.you .fine strong { color:var(--ink); }
 
 </style>
 <a class="skip" href="#view">Skip to content</a>
@@ -1819,7 +1835,7 @@ const Store = (() => {
 function defaultState() {
   return {
     v: 3,
-    prefs: { portion:'standard', heat:'mild', theme:'system' },
+    prefs: { portion:'standard', heat:'mild', theme:'system', lb:175, inches:70, protein:195, kcal:null },
     inv: {},          // id -> 'out' (anything not listed is on hand)
     shopping: [],     // [{ id, g, why, checked }]
     opts: {},         // per-recipe choices
@@ -1843,7 +1859,7 @@ function loadState() {
   if (!Array.isArray(out.shopping)) out.shopping = [];
   if (!isObj(out.ui.rtabs)) out.ui.rtabs = {};
   if (typeof out.ui.invSearch !== 'string') out.ui.invSearch = '';
-  if (!['all','dinners','prep','sweet'].includes(out.ui.mealFilter)) out.ui.mealFilter = 'all';
+  if (!['all','dinners','crock','sweet'].includes(out.ui.mealFilter)) out.ui.mealFilter = 'all';
   Object.keys(out.notes).forEach(k => { if (!RECIPE[k] || typeof out.notes[k] !== 'string') delete out.notes[k]; });
   Object.keys(out.opts).forEach(k => { if (!RECIPE[k] || !isObj(out.opts[k])) delete out.opts[k]; });
   // v3: inventory is two-state now, and anything not on hand is on the list
@@ -1957,6 +1973,40 @@ function SERVING_PRESETS(r) {
     ? [[4, '4 days'], [6, '6 days'], [8, '8 days']]
     : [[1, '1 meal'], [2, '2 days'], [4, '4 days'], [6, '6 days']];
 }
+/* ---------- You ----------
+   Weight and a protein goal, and what that leaves for fat and carbs. Every
+   number is editable; the suggestions are only a starting point.          */
+const BODY = { lb:[90, 400, 5, 175], inches:[48, 84, 1, 70], protein:[60, 340, 5, 195], kcal:[1200, 5000, 50, 0] };
+function suggestProtein(lb) { return clamp(Math.round(lb * 1.1 / 5) * 5, BODY.protein[0], BODY.protein[1]); }
+// Mifflin-St Jeor for a moderately active day, at 30 and between the male and
+// female constants. It's a starting number, not a measurement.
+function suggestKcal(lb, inches) {
+  const bmr = 10 * (lb / 2.2046) + 6.25 * (inches * 2.54) - 5 * 30 - 78;
+  return clamp(Math.round(bmr * 1.5 / 50) * 50, BODY.kcal[0], BODY.kcal[1]);
+}
+function bodyNum(k, fallback) {
+  const [lo, hi] = BODY[k];
+  const v = +S.prefs[k];
+  return Number.isFinite(v) && v > 0 ? clamp(Math.round(v), lo, hi) : fallback;
+}
+function body() {
+  const lb = bodyNum('lb', BODY.lb[3]);
+  const inches = bodyNum('inches', BODY.inches[3]);
+  const protein = bodyNum('protein', suggestProtein(lb));
+  const kcal = bodyNum('kcal', suggestKcal(lb, inches));
+  // enough fat to stay sane: a quarter of the day, and never under 0.3 g per pound
+  const fat = Math.max(Math.round(lb * 0.3), Math.round(kcal * 0.25 / 9));
+  const carbs = Math.max(0, Math.round((kcal - protein * 4 - fat * 9) / 4));
+  return { lb, inches, protein, kcal, fat, carbs };
+}
+function setBody(k, v) {
+  const [lo, hi] = BODY[k];
+  S.prefs[k] = clamp(Math.round(v), lo, hi);
+  save();
+}
+function fmtHeight(inches) { return Math.floor(inches / 12) + '\u2032' + (inches % 12) + '\u2033'; }
+function fmtInt(n) { return Math.round(n).toLocaleString('en-US'); }
+
 function portionFactor(portion) { return (portion || S.prefs.portion) === 'large' ? { protein:1.25, carb:4/3 } : { protein:1, carb:1 }; }
 
 function getOpts(r) {
@@ -2491,6 +2541,36 @@ function macroRow(nu, minutes, activeOnly) {
     [activeOnly ? 'Hands-on' : 'Time', minutes < 60 ? minutes : fmtHM(minutes), minutes < 60 ? 'min' : 'hr']];
   return `<dl class="macros">${cells.map(([k, v, u]) => `<div><dt>${k}</dt><dd><span class="num">${v}</span>${u ? `<span class="unit">${u}</span>` : ''}</dd></div>`).join('')}</dl>`;
 }
+const COUNT_WORD = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six'];
+// How one portion sits against the day: protein first, then what's left for
+// fat and carbs. The point is knowing whether to eat more.
+function dayBlock(nu, unit, sweet) {
+  const b = body();
+  const p = Math.max(1, Math.round(nu.protein));
+  const rows = [['Protein', p, b.protein], ['Fat', Math.round(nu.fat), b.fat], ['Carbs', Math.round(nu.carbs), b.carbs]];
+  let line;
+  if (sweet) {
+    // a brownie isn't a protein source; what it costs you is carbs and fat
+    line = `One ${unit} spends ${Math.round(nu.carbs / b.carbs * 100)}% of your carbs and ${Math.round(nu.fat / b.fat * 100)}% of your fat for the day.`;
+  } else if (p >= b.protein) {
+    line = `One ${unit} is a whole day of protein on its own.`;
+  } else {
+    const n = Math.ceil(b.protein / p);
+    const short = b.protein - p * 2;
+    line = n <= 6
+      ? `${COUNT_WORD[n]} of these makes ${n * p} g — your ${b.protein} g day, covered.`
+      : `Even six of these is only ${6 * p} g, so the rest of your ${b.protein} g has to come from somewhere else.`;
+    if (n === 3 && short > 0) line += ` Two leaves you ${short} g short.`;
+  }
+  return `<div class="day">
+    <div class="day-head"><span class="opt-label">Your day</span><span class="fine">per ${esc(unit)} · ${fmtInt(b.kcal)} kcal day</span></div>
+    ${rows.map(([k, got, goal]) => `<div class="day-row${k === 'Protein' ? ' prot' : ''}"><span class="day-k">${k}</span>
+      <span class="day-bar"><i style="width:${Math.min(100, Math.round(got / goal * 100))}%"></i></span>
+      <span class="day-v mono">${got} <span class="muted">/ ${goal} g</span></span></div>`).join('')}
+    <p class="day-line">${esc(line)}</p>
+    <a class="day-edit" href="#/settings">Change your numbers</a>
+  </div>`;
+}
 function microTable(nu) {
   const rows = [['Sodium', Math.round(nu.sodium / 10) * 10, 'mg', 'sodium'], ['Potassium', Math.round(nu.potassium / 10) * 10, 'mg', 'potassium'],
     ['Calcium', Math.round(nu.calcium / 10) * 10, 'mg', 'calcium'], ['Iron', Math.round(nu.iron * 10) / 10, 'mg', 'iron'],
@@ -2544,7 +2624,7 @@ function mealRow(r, rd) {
     : '<span class="ready-line ok">Have everything</span>';
   return `<li class="mrow"><a class="mrow-main" href="#/meal/${r.id}">${artFor(r, 54, getOpts(r).carb)}<span class="mrow-body">
     <span class="mrow-name">${esc(r.name)}${r.crockpot ? ' <span class="tag">crock pot</span>' : ''}</span>
-    <span class="meta">~${roundKcal(nu.kcal)} kcal · ${roundG(nu.protein)} g protein · ${time}</span>
+    <span class="meta">~${roundKcal(nu.kcal)} kcal · ${roundG(nu.protein)} g protein (${Math.round(nu.protein / body().protein * 100)}%) · ${time}</span>
     ${status}</span></a></li>`;
 }
 const MEAL_TABS = [['all','All'],['dinners','Dinners'],['crock','Crock pot'],['sweet','Sweet']];
@@ -2571,7 +2651,7 @@ function viewMeals(filter) {
   <header class="page-head"><h1 class="h1">Meals</h1>${need ? `<a class="btn small" href="#/shopping">Buy ${need}</a>` : `<a class="icon-btn" href="#/settings" aria-label="Settings">${ICON.gear}</a>`}</header>
   <p class="lede">Open one to set how many days you’re cooking for, see what it takes, and send anything you’re short on to the shopping list.</p>
   ${seg('Show', MEAL_TABS, filter, 'meal-filter')}
-  <p class="list-caption">${esc(MEAL_BLURB[filter])} <span class="muted">${ready} of ${rows.length} you can make right now.</span></p>
+  <p class="list-caption">${esc(MEAL_BLURB[filter])} <span class="muted">${ready} of ${rows.length} you can make right now. The percentage is protein against your ${body().protein} g day.</span></p>
   ${rows.length ? `<ul class="mrows">${rows.map(x => mealRow(x.r, x.rd)).join('')}</ul>` : emptyState('Nothing here yet.')}`;
 }
 
@@ -2591,10 +2671,10 @@ function tierBlock(r, o, id) {
 }
 function amountBox(r, o, c, id) {
   if (o.mode !== 'amount') return '';
-  const protName = r.protein === 'beef' ? (r.id === 'stew' ? 'chuck roast' : 'ground beef') : r.protein === 'sausage' ? 'sausage' : 'chicken thighs';
+  const protName = r.protein === 'beef' ? (r.id === 'stew' ? 'Chuck roast' : 'Ground beef') : r.protein === 'sausage' ? 'Sausage' : 'Chicken thighs';
   const disp = o.amountUnit === 'lb' ? String(Math.round(o.amountOz / 16 * 100) / 100) : String(Math.round(o.amountOz * 10) / 10);
   return `<div class="amount-box">
-    <label class="opt-label" for="amount-${id}">How much ${protName} do you have?</label>
+    <label class="opt-label" for="amount-${id}">${esc(protName)} you have</label>
     <div class="amount-row"><input id="amount-${id}" class="amount-input mono" type="text" inputmode="decimal" autocomplete="off" value="${disp}" data-a="amount-num" data-rid="${id}">
       ${seg('Unit', [['lb','lb'],['oz','oz']], o.amountUnit, 'opt', `data-rid="${id}" data-k="amountUnit"`)}</div>
     <div class="chips">${[[8,'½ lb'],[16,'1 lb'],[24,'1½ lb'],[32,'2 lb'],[48,'3 lb']].map(([oz, l]) => `<button type="button" class="chip" aria-pressed="${Math.abs(o.amountOz - oz) < 0.01}" data-a="amount-preset" data-rid="${id}" data-v="${oz}">${l}</button>`).join('')}</div>
@@ -2677,6 +2757,7 @@ function viewRecipe(id) {
     <p class="lede">${esc(r.flavor)}</p>
     ${macroRow(nu, r.crockpot ? tm.active : isDinner ? tm.total : tm.active + tm.bake, !!r.crockpot)}
     <p class="fine">Per ${isDinner ? (c.mode === 'amount' ? 'portion' : 'serving') : c.y.unit}, approximate.${missing.length ? ` Missing ${esc(missing.map(lcName).join(', '))}.` : ''}</p>
+    ${dayBlock(nu, isDinner ? (c.mode === 'amount' ? 'portion' : 'serving') : c.y.unit, !isDinner)}
   </header>
   <div class="opts">${modeRow}${extraOpts}</div>
   ${recipeTabs(id, TABS, tab)}
@@ -2781,11 +2862,24 @@ function viewShopping() {
 /* ---------- SETTINGS ---------- */
 function viewSettings() {
   const p = S.prefs;
+  const b = body();
+  const suggested = b.protein === suggestProtein(b.lb) && b.kcal === suggestKcal(b.lb, b.inches);
   const row = (label, control) => `<div class="set-row stack"><span class="set-label">${label}</span>${control}</div>`;
+  const bodyRow = (label, k, display) => `<div class="set-row"><span class="set-label">${label}</span>${stepper(label, S.prefs[k], 'body-step', `data-k="${k}"`, display)}</div>`;
   return `
   ${backLink('#/meals', 'Meals')}
   <header class="page-head"><h1 class="h1">Settings</h1></header>
   ${!Store.ok ? '<p class="callout warn"><strong>Storage unavailable</strong> This browser isn’t saving data, so changes last until you close the page.</p>' : ''}
+  <section class="sec you">
+    <div class="sec-head"><h2 class="h2">You</h2><span class="muted">${esc(fmtHeight(b.inches))} · ${b.lb} lb</span></div>
+    <p class="muted">Used to show how a meal sits against your day. Nothing else reads these.</p>
+    ${bodyRow('Weight', 'lb', b.lb + ' lb')}
+    ${bodyRow('Height', 'inches', fmtHeight(b.inches))}
+    ${bodyRow('Protein a day', 'protein', b.protein + ' g')}
+    ${bodyRow('Calories a day', 'kcal', fmtInt(b.kcal))}
+    <p class="fine">${b.protein} g is ${Math.round(b.protein / b.lb * 100) / 100} g per pound. That leaves about <strong>${b.fat} g of fat</strong> and <strong>${b.carbs} g of carbs</strong> on a ${fmtInt(b.kcal)} kcal day. The calorie number starts as an estimate from your height and weight — change it if you know better.</p>
+    ${suggested ? '' : `<button type="button" class="text-btn" data-a="body-suggest">Back to suggested (${suggestProtein(b.lb)} g protein, ${fmtInt(suggestKcal(b.lb, b.inches))} kcal)</button>`}
+  </section>
   <div class="set-group">
     ${row('Portion size', seg('Portion size', [['standard','Standard · 8 oz protein'],['large','Hungry · 10 oz']], p.portion, 'pref', 'data-k="portion"'))}
     ${row('Heat', seg('Heat', [['mild','Mild'],['medium','Medium'],['hot','Hot']], p.heat, 'pref', 'data-k="heat"'))}
@@ -3151,6 +3245,22 @@ const ACT = {
     const k = el.dataset.k;
     S.prefs[k] = el.dataset.v;
     save(); render();
+  },
+  'body-step'(el) {
+    const k = el.dataset.k, step = BODY[k][2];
+    const b = body();
+    const before = b[k];
+    setBody(k, before + step * (+el.dataset.d));
+    const after = body()[k];
+    if (after === before) { toast(+el.dataset.d > 0 ? 'That’s as high as this goes' : 'That’s as low as this goes'); return; }
+    render();
+  },
+  'body-suggest'() {
+    const b = body();
+    S.prefs.protein = suggestProtein(b.lb);
+    S.prefs.kcal = suggestKcal(b.lb, b.inches);
+    save(); render();
+    toast('Back to the suggested numbers');
   },
   'start-cook'(el) { startCook(el.dataset.id); },
   'clear-checks'(el) { delete S.checks[el.dataset.id]; save(); render(); },

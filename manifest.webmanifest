@@ -1,12 +1,12 @@
 {
   "name": "Default Dinner",
   "short_name": "Dinner",
-  "description": "Tonight's dinner, prep, desserts and kitchen inventory.",
+  "description": "Meals, the ingredients they take, and a shopping list that knows what you already have.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#F2F3F0",
+  "background_color": "#0B2117",
   "theme_color": "#F2F3F0",
   "icons": [
     {
