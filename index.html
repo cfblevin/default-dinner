@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="app-version" content="d6c0fcc59bad">
+<meta name="app-version" content="c1187bf18e4c">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -685,6 +685,12 @@ body.cooking .toast { bottom:calc(110px + var(--safe-b)); }
 .nut-head { margin-top:26px; padding-top:18px; border-top:1px solid var(--line); }
 .rhead .kicker { margin-top:3px; }
 
+.chips.pack { gap:5px; }
+.chips.pack .chip { flex:0 0 auto; padding:6px 11px; font-size:13.5px; }
+.amount-label.quiet { font-weight:600; color:var(--ink-2); }
+.amount-unit { font-size:14.5px; color:var(--ink-2); font-weight:600; padding-right:4px; }
+.quiet-btn { justify-self:start; font-size:13.5px; min-height:36px; padding:0; color:var(--ink-3); text-decoration:underline; text-underline-offset:3px; }
+
 </style>
 <a class="skip" href="#view">Skip to content</a>
 <p id="storage-warn" class="storage-warn" hidden>Saving isn’t available in this browser. Changes last until you close the page.</p>
@@ -1150,12 +1156,12 @@ const RECIPES = [
 },
 
 {
-  id:'friedrice', type:'dinner', name:'Chicken Fried Rice', short:'Fried Rice',
+  id:'friedrice', type:'dinner', name:'Chicken Fried Rice', short:'Fried Rice', pack:8,
   flavor:'Cold rice fried hard in a hot pan with egg, chicken and green onion. The best thing to do with leftovers.',
   difficulty:'Easy', protein:'chicken', tags:['uses leftovers','15 min','one pan'],
   bowl:[['rice',0.5],['chicken',0.24],['egg',0.14],['corn',0.12]], garnish:'greenonion',
   ingredients:[
-    { id:'thighs', nutId:'cookedchicken', name:'Cooked chicken', q:1.25, u:'cup', g:170, role:'protein', core:true, note:'about 6 oz, chopped — leftovers or rotisserie', sub:'Starting raw: cut up 8 oz of thighs, cook them first, then carry on.' },
+    { id:'thighs', nutId:'cookedchicken', name:'Cooked chicken', q:6, u:'oz', g:170, role:'protein', core:true, note:'chopped — leftovers or rotisserie, about 1¼ cups', sub:'Starting raw: cut up 8 oz of thighs, cook them first, then carry on.' },
     { id:'rice', name:'Cooked rice', q:1.5, u:'cup', g:237, role:'carb', core:true, note:'cold, from the fridge', sub:'Fresh rice: spread it on a plate for 5 minutes to dry and cool.' },
     { id:'eggs', q:2, u:'egg', g:100, role:'protein', core:true },
     { id:'corn', q:0.5, u:'cup', g:82, role:'veg', note:'frozen is fine' },
@@ -1335,7 +1341,7 @@ const RECIPES = [
   },
 },
 {
-  id:'sheetpan', type:'dinner', name:'Sheet-Pan Sausage and Potatoes', short:'Sheet-Pan Sausage',
+  id:'sheetpan', type:'dinner', name:'Sheet-Pan Sausage and Potatoes', short:'Sheet-Pan Sausage', pack:4,
   flavor:'Sausage, peppers and potatoes roasted on one pan until the edges char. Almost all of it is oven time.',
   difficulty:'Easy', protein:'sausage', tags:['hands-off','one pan','best leftovers'],
   bowl:[['potato',0.4],['sausage',0.34],['peppers',0.26]], garnish:'none',
@@ -1860,7 +1866,7 @@ function defaultState() {
     notes: {},        // per-recipe notes
     cook: null,
     lastBackup: 0,
-    ui: { mealFilter:'all', invSearch:'', rtabs:{} },
+    ui: { mealFilter:'all', invSearch:'', amtOpen:'', rtabs:{} },
   };
 }
 
@@ -1876,6 +1882,7 @@ function loadState() {
   if (!Array.isArray(out.shopping)) out.shopping = [];
   if (!isObj(out.ui.rtabs)) out.ui.rtabs = {};
   if (typeof out.ui.invSearch !== 'string') out.ui.invSearch = '';
+  if (!RECIPE[out.ui.amtOpen]) out.ui.amtOpen = '';
   if (!['all','dinners','crock','sweet'].includes(out.ui.mealFilter)) out.ui.mealFilter = 'all';
   Object.keys(out.notes).forEach(k => { if (!RECIPE[k] || typeof out.notes[k] !== 'string') delete out.notes[k]; });
   Object.keys(out.opts).forEach(k => { if (!RECIPE[k] || !isObj(out.opts[k])) delete out.opts[k]; });
@@ -1984,12 +1991,12 @@ function fmtQ(q, u) {
 
 /* ---------- Recipe options ---------- */
 const SERVING_OPTS = [1, 2, 3, 4, 5, 6, 8];
-// One meal, or a run of days. Crock pot meals start at a batch.
-function SERVING_PRESETS(r) {
-  return r.crockpot
-    ? [[4, '4 days'], [6, '6 days'], [8, '8 days']]
-    : [[1, '1 meal'], [2, '2 days'], [4, '4 days'], [6, '6 days']];
-}
+// Only the slow cooker is about days. Everything else is a package of meat.
+function SERVING_PRESETS(r) { return [[4, '4 days'], [6, '6 days'], [8, '8 days']]; }
+function proteinOf(r) { return r.ingredients.find(i => i.role === 'protein'); }
+// What you usually buy: a pound, unless the recipe says otherwise.
+function packSize(r) { const p = proteinOf(r); return r.pack || (p.u === 'oz' ? 16 : Math.round(p.q)); }
+function amountRange(r) { return proteinOf(r).u === 'oz' ? [2, 96] : [1, 12]; }
 /* ---------- You ----------
    Weight and a protein goal, and what that leaves for fat and carbs. Every
    number is editable; the suggestions are only a starting point.          */
@@ -2031,13 +2038,15 @@ function getOpts(r) {
   const o = Object.assign({}, saved);
   if (!['base','better','loaded'].includes(o.tier)) o.tier = 'base';
   if (r.type === 'dinner') {
+    const prot = proteinOf(r);
     o.servings = SERVING_OPTS.includes(+o.servings) ? +o.servings : (r.defaultServings || 1);
-    o.mode = o.mode === 'amount' ? 'amount' : 'servings';
-    o.amountUnit = o.amountUnit === 'oz' ? 'oz' : 'lb';
-    const prot = r.ingredients.find(i => i.role === 'protein');
-    o.amountOz = Number.isFinite(+o.amountOz) && +o.amountOz > 0 ? clamp(+o.amountOz, 2, 96) : Math.round(o.servings * prot.q * portionFactor().protein);
+    // Days are a slow-cooker idea. A pan meal is however much meat you opened.
+    o.mode = r.crockpot ? (o.mode === 'amount' ? 'amount' : 'servings') : 'amount';
+    o.amountUnit = prot.u === 'oz' ? (o.amountUnit === 'oz' ? 'oz' : 'lb') : prot.u;
+    const [lo, hi] = amountRange(r);
+    o.amountOz = Number.isFinite(+o.amountOz) && +o.amountOz > 0 ? clamp(+o.amountOz, lo, hi)
+      : (r.crockpot ? Math.round(o.servings * prot.q * portionFactor().protein) : packSize(r));
     o.plates = Number.isInteger(+o.plates) && +o.plates >= 1 && +o.plates <= 6 ? +o.plates : null;
-    if (o.mode === 'amount' && o.amountDate !== dayKey()) { o.mode = 'servings'; o.plates = null; }
     const carbs = r.carbs || ['rice'];
     o.carb = carbs.includes(o.carb) ? o.carb : (r.defaultCarb || (carbs.includes(S.prefs.carb) ? S.prefs.carb : carbs[0]));
     if (!['fresh','ready'].includes(o.rice)) o.rice = 'fresh';
@@ -2046,15 +2055,13 @@ function getOpts(r) {
     if (!r.yields.some(y => y.id === o.yield)) o.yield = r.yields[0].id;
     if (r.variations && !r.variations.some(v => v.id === o.variation)) o.variation = r.variations[0].id;
     if (r.glazes && !r.glazes.some(g => g.id === o.glaze)) o.glaze = 'chocolate';
-    o.mode = r.have && o.mode === 'amount' && o.amountDate === dayKey() ? 'amount' : 'servings';
+    o.mode = r.have && o.mode === 'amount' ? 'amount' : 'servings';
     if (r.have) o.haveCount = Number.isInteger(+o.haveCount) ? clamp(+o.haveCount, r.have.min, r.have.max) : r.have.base;
   }
   return o;
 }
 function setOpt(rid, k, v) {
-  const patch = { [k]: v };
-  if (['mode','amountOz','plates','amountUnit','haveCount'].includes(k)) patch.amountDate = dayKey();
-  S.opts[rid] = Object.assign({}, S.opts[rid], patch);
+  S.opts[rid] = Object.assign({}, S.opts[rid], { [k]: v });
   save();
 }
 
@@ -2136,12 +2143,12 @@ function build(r, overrides) {
   return c;
 }
 
-// "2 servings" or "1 lb chicken thighs · 2 plates"
+// "6 servings" or "1 lb chicken thighs · one meal"
 function amountLabel(c) {
   if (c.r.type !== 'dinner') return '';
   if (c.mode !== 'amount') return c.n + ' ' + (c.n > 1 ? 'servings' : 'serving');
   const p = c.ings.find(i => i.role === 'protein');
-  return fmtQ(c.amountOz, 'oz') + ' ' + lcName(p) + ' · ' + c.plates + ' ' + (c.plates > 1 ? 'plates' : 'plate');
+  return (p ? fmtQ(p.sq, p.u) + ' ' + lcName(p) + ' · ' : '') + (c.plates > 1 ? c.plates + ' portions' : 'one meal');
 }
 // Dessert batch sized to what you have (bananas).
 function haveYield(r, count) {
@@ -2647,7 +2654,7 @@ function mealRow(r, rd) {
 const MEAL_TABS = [['all','All'],['dinners','Dinners'],['crock','Crock pot'],['sweet','Sweet']];
 const MEAL_BLURB = {
   all:'Everything there is.',
-  dinners:'Cook it and eat it the same night — or scale it up for the week.',
+  dinners:'Open a package of meat, cook it, eat it. Split it up if you want leftovers.',
   crock:'Everything goes in the pot in the morning. These are built to make several days at once.',
   sweet:'Two things worth baking.',
 };
@@ -2666,7 +2673,7 @@ function viewMeals(filter) {
   const need = S.shopping.filter(x => !x.checked).length;
   return `
   <header class="page-head"><h1 class="h1">Meals</h1>${need ? `<a class="btn small" href="#/shopping">Buy ${need}</a>` : `<a class="icon-btn" href="#/settings" aria-label="Settings">${ICON.gear}</a>`}</header>
-  <p class="lede">Open one to set how many days you’re cooking for, see what it takes, and send anything you’re short on to the shopping list.</p>
+  <p class="lede">Open one to set how much you’re cooking with, see what it takes, and send anything you’re short on to the shopping list.</p>
   ${seg('Show', MEAL_TABS, filter, 'meal-filter')}
   <p class="list-caption">${esc(MEAL_BLURB[filter])} <span class="muted">${ready} of ${rows.length} you can make right now. The percentage is protein against your ${body().protein} g day.</span></p>
   ${rows.length ? `<ul class="mrows">${rows.map(x => mealRow(x.r, x.rd)).join('')}</ul>` : emptyState('Nothing here yet.')}`;
@@ -2686,38 +2693,53 @@ function tierBlock(r, o, id) {
   return `<h3 class="h3">Make it better</h3>${seg('Flavor level', [['base','Base'],['better','Better'],['loaded','Loaded']], o.tier, 'opt', `data-rid="${id}" data-k="tier"`)}
     <dl class="tiers">${['base','better','loaded'].map(t => `<div class="${t === o.tier ? 'on' : ''}"><dt>${t[0].toUpperCase() + t.slice(1)}</dt><dd>${esc(r.tiers[t].text)}</dd></div>`).join('')}</dl>`;
 }
+const PACK_CHIPS = [[8, '\u00bd lb'], [12, '\u00be lb'], [16, '1 lb'], [20, '1\u00bc lb'], [24, '1\u00bd lb']];
 function amountBox(r, o, c, id) {
   if (o.mode !== 'amount') return '';
-  const protName = r.protein === 'beef' ? (r.id === 'stew' ? 'Chuck roast' : 'Ground beef') : r.protein === 'sausage' ? 'Sausage' : 'Chicken thighs';
-  const disp = o.amountUnit === 'lb' ? String(Math.round(o.amountOz / 16 * 100) / 100) : String(Math.round(o.amountOz * 10) / 10);
+  const prot = proteinOf(r);
+  const weight = prot.u === 'oz';
+  const protName = r.protein === 'beef' ? (r.id === 'stew' ? 'Chuck roast' : 'Ground beef') : r.protein === 'sausage' ? 'Sausage' : r.id === 'beefbroccoli' ? 'Steak' : r.id === 'friedrice' ? 'Cooked chicken' : 'Chicken thighs';
+  const chips = weight ? PACK_CHIPS : [2, 3, 4, 5, 6].map(n => [n, n + ' links']);
+  const onChip = chips.some(([v]) => Math.abs(o.amountOz - v) < 0.01);
+  const custom = !onChip || S.ui.amtOpen === id;
+  const disp = weight && o.amountUnit === 'lb' ? String(Math.round(o.amountOz / 16 * 100) / 100) : String(Math.round(o.amountOz * 10) / 10);
   return `<div class="amount-box">
-    <div class="amount-line"><label class="amount-label" for="amount-${id}">${esc(protName)}</label>
+    <div class="chips pack">${chips.map(([val, l]) => `<button type="button" class="chip" aria-pressed="${!custom && Math.abs(o.amountOz - val) < 0.01}" data-a="amount-preset" data-rid="${id}" data-v="${val}">${esc(l)}</button>`).join('')}
+      <button type="button" class="chip" aria-pressed="${custom}" data-a="amount-other" data-rid="${id}">Other\u2026</button></div>
+    ${custom ? `<div class="amount-line"><label class="amount-label" for="amount-${id}">${esc(protName)}</label>
       <input id="amount-${id}" class="amount-input mono" type="text" inputmode="decimal" autocomplete="off" value="${disp}" data-a="amount-num" data-rid="${id}">
-      ${seg('Unit', [['lb','lb'],['oz','oz']], o.amountUnit, 'opt', `data-rid="${id}" data-k="amountUnit"`)}</div>
-    <div class="chips">${[[8,'½ lb'],[16,'1 lb'],[24,'1½ lb'],[32,'2 lb'],[48,'3 lb']].map(([oz, l]) => `<button type="button" class="chip" aria-pressed="${Math.abs(o.amountOz - oz) < 0.01}" data-a="amount-preset" data-rid="${id}" data-v="${oz}">${l}</button>`).join('')}</div>
-    <div class="amount-line"><span class="amount-label">Split into</span>
-      ${stepper('portions', c.plates, 'plates-step', `data-rid="${id}"`, c.plates + (c.plates > 1 ? ' portions' : ' portion'))}</div>
+      ${weight ? seg('Unit', [['lb','lb'],['oz','oz']], o.amountUnit, 'opt', `data-rid="${id}" data-k="amountUnit"`) : '<span class="amount-unit">links</span>'}</div>` : ''}
+    ${c.plates > 1
+      ? `<div class="amount-line"><span class="amount-label quiet">Split into</span>
+          ${stepper('portions', c.plates, 'plates-step', `data-rid="${id}"`, c.plates + ' portions')}</div>`
+      : `<button type="button" class="text-btn quiet-btn" data-a="plates-step" data-d="1" data-rid="${id}">Splitting it up?</button>`}
   </div>`;
 }
 
 // The practical line: this much meat, this many portions, this much protein.
 function cookResult(r, c, nu, isDinner) {
-  const per = isDinner ? (c.mode === 'amount' ? 'portion' : 'meal') : c.y.unit;
-  const prot = c.ings.find(i => i.role === 'protein');
   const pieces = c.pieces || 1;
-  const from = isDinner
-    ? (prot ? fmtQ(prot.sq, prot.u) + ' ' + lcName(prot) : '')
-    : (c.y.label.split('→')[0] || '').trim();
-  const made = isDinner
-    ? pieces + (pieces > 1 ? ' portions' : ' portion')
+  const prot = c.ings.find(i => i.role === 'protein');
+  const goal = body().protein;
+  const from = isDinner ? (prot ? fmtQ(prot.sq, prot.u) + ' ' + lcName(prot) : '') : (c.y.label.split('\u2192')[0] || '').trim();
+  if (isDinner && !r.crockpot) {
+    // you opened a package and you're eating it: the whole pan is the number
+    const total = Math.round(nu.protein * pieces);
+    return `<div class="result">
+      <p class="result-from">${esc(from)} <span class="arrow">\u2192</span> <strong>${pieces > 1 ? pieces + ' portions' : 'one meal'}</strong></p>
+      <p class="result-num"><span class="big">${total} g</span> protein${pieces > 1 ? ' in the pan' : ''}</p>
+      <p class="result-sub">${Math.round(total / goal * 100)}% of your protein day${pieces > 1 ? ` \u00b7 ${roundG(nu.protein)} g a portion` : ''} \u00b7 ~${fmtInt(roundKcal(nu.kcal * pieces))} kcal</p>
+    </div>`;
+  }
+  const per = isDinner ? 'portion' : c.y.unit;
+  const made = isDinner ? pieces + (pieces > 1 ? ' portions' : ' portion')
     : pieces + ' ' + (pieces > 1 ? PLURAL[c.y.unit] || c.y.unit + 's' : c.y.unit);
-  const each = roundG(nu.protein);
   const sub = isDinner
-    ? [pieces > 1 ? Math.round(nu.protein * pieces) + ' g in the batch' : '', Math.round(nu.protein / body().protein * 100) + '% of your protein day'].filter(Boolean).join(' · ')
+    ? Math.round(nu.protein * pieces) + ' g in the batch \u00b7 ' + Math.round(nu.protein / goal * 100) + '% of your protein day'
     : '~' + roundKcal(nu.kcal) + ' kcal a ' + per;
   return `<div class="result">
-    <p class="result-from">${from ? `${esc(from)} <span class="arrow">→</span> ` : ''}<strong>${esc(made)}</strong></p>
-    <p class="result-num"><span class="big">${each} g</span> protein a ${esc(per)}</p>
+    <p class="result-from">${from ? `${esc(from)} <span class="arrow">\u2192</span> ` : ''}<strong>${esc(made)}</strong></p>
+    <p class="result-num"><span class="big">${roundG(nu.protein)} g</span> protein a ${esc(per)}</p>
     <p class="result-sub">${esc(sub)}</p>
   </div>`;
 }
@@ -2744,9 +2766,9 @@ function viewRecipe(id) {
   const tab = recipeTab(id, TABS);
 
   const cookCard = `<section class="cookcard">
-    <span class="opt-label">${isDinner ? 'Cooking for' : 'Make'}</span>
+    <span class="opt-label">${isDinner ? (r.crockpot ? 'Cooking for' : 'Cooking with') : 'Make'}</span>
     ${isDinner
-      ? seg('Cooking for', SERVING_PRESETS(r).concat([['amount','I have…']]), o.mode === 'amount' ? 'amount' : o.servings, 'opt', `data-rid="${id}" data-k="servings"`) + amountBox(r, o, c, id)
+      ? (r.crockpot ? seg('Cooking for', SERVING_PRESETS(r).concat([['amount','I have…']]), o.mode === 'amount' ? 'amount' : o.servings, 'opt', `data-rid="${id}" data-k="servings"`) : '') + amountBox(r, o, c, id)
       : seg('Batch size', r.yields.map(y => [y.id, y.label]).concat(r.have ? [['have','I have…']] : []), o.mode === 'amount' ? 'have' : o.yield, 'opt', `data-rid="${id}" data-k="yield"`)
         + (o.mode === 'amount' && r.have ? `<div class="amount-box"><div class="amount-line"><span class="amount-label">${esc(r.have.question.replace(/\?$/, ''))}</span>
           ${stepper('bananas', o.haveCount, 'have-step', `data-rid="${id}"`, o.haveCount + (o.haveCount === 1 ? ' banana' : ' bananas'))}</div></div>` : '')
@@ -3289,7 +3311,17 @@ const ACT = {
     setOpt(rid, 'plates', next);
     render();
   },
-  'amount-preset'(el) { setOpt(el.dataset.rid, 'amountOz', +el.dataset.v); setOpt(el.dataset.rid, 'plates', null); render(); },
+  'amount-preset'(el) {
+    S.ui.amtOpen = '';
+    setOpt(el.dataset.rid, 'amountOz', +el.dataset.v); setOpt(el.dataset.rid, 'plates', null);
+    render();
+  },
+  'amount-other'(el) {
+    S.ui.amtOpen = el.dataset.rid;
+    save(); render();
+    const inp = document.getElementById('amount-' + el.dataset.rid);
+    if (inp) { inp.focus({ preventScroll:true }); inp.select(); }
+  },
   'have-step'(el) {
     const r = RECIPE[el.dataset.rid];
     const cur = getOpts(r).haveCount;
@@ -3436,12 +3468,16 @@ const ACT = {
 const CHANGE = {
   check(el) { const { rid, key } = el.dataset; S.checks[rid] = Object.assign({}, S.checks[rid], { [key]: el.checked }); save(); },
   'amount-num'(el) {
-    const rid = el.dataset.rid;
-    const o = getOpts(RECIPE[rid]);
+    const rid = el.dataset.rid, r = RECIPE[rid];
+    const o = getOpts(r);
     const val = parseFloat(String(el.value).replace(',', '.'));
-    const oz = o.amountUnit === 'lb' ? val * 16 : val;
-    if (!(oz >= 2 && oz <= 96)) { toast('Enter an amount between 2 oz and 6 lb'); deferRender(); return; }
-    setOpt(rid, 'amountOz', Math.round(oz * 10) / 10);
+    const amount = o.amountUnit === 'lb' ? val * 16 : val;
+    const [lo, hi] = amountRange(r);
+    if (!(amount >= lo && amount <= hi)) {
+      toast(proteinOf(r).u === 'oz' ? 'Enter an amount between 2 oz and 6 lb' : 'Enter between 1 and 12 links');
+      deferRender(); return;
+    }
+    setOpt(rid, 'amountOz', Math.round(amount * 10) / 10);
     setOpt(rid, 'plates', null);
     deferRender();
   },
