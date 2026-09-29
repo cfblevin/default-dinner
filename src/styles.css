@@ -98,7 +98,7 @@ dl, dd { margin:0; }
 .fav-mark { color:var(--ink); }
 
 .tabbar { position:fixed; left:0; right:0; bottom:0; z-index:20; background:var(--surface); background:color-mix(in srgb, var(--surface) 90%, transparent); -webkit-backdrop-filter:saturate(1.4) blur(14px); backdrop-filter:saturate(1.4) blur(14px); border-top:1px solid var(--line); padding-bottom:var(--safe-b); }
-.tabbar-inner { max-width:660px; margin:0 auto; display:grid; grid-template-columns:repeat(4, 1fr); padding-inline:4px; }
+.tabbar-inner { max-width:660px; margin:0 auto; display:grid; grid-template-columns:repeat(3, 1fr); padding-inline:4px; }
 .tabbar a { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; min-height:var(--nav-h); color:var(--ink-3); text-decoration:none; font-size:11px; font-weight:600; letter-spacing:.05em; text-transform:uppercase; }
 .tabbar svg { width:24px; height:24px; fill:none; stroke:currentColor; stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; }
 .tabbar a[aria-current="page"] { color:var(--ink); }
@@ -578,3 +578,14 @@ body.cooking .toast { bottom:calc(110px + var(--safe-b)); }
 .shop li { min-height:48px; align-items:center; }
 .shop label { padding-block:6px; }
 .inv-cats .label { margin-top:26px; }
+
+/* ---------- Two-state ingredients ---------- */
+.pill.in { color:var(--ink-2); background:var(--surface-2); min-width:78px; }
+.pill.out { color:var(--bad); background:var(--bad-soft); min-width:78px; }
+.need-badge { display:inline-block; font-size:12.5px; font-weight:700; color:var(--bad); background:var(--bad-soft); border-radius:6px; padding:3px 8px; }
+.ing.missing .ing-name { color:var(--ink); }
+.shop-why { color:var(--ink-3); }
+.btn-row.stack { flex-direction:column; align-items:stretch; }
+.dial dt { color:var(--ink); font-weight:700; }
+.dial dd { color:var(--ink-2); }
+.inv-cat-status { font-variant-numeric:tabular-nums; }
